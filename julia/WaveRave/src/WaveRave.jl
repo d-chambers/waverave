@@ -1,5 +1,5 @@
 module WaveRave
+    include("Stencil.jl")
 
-# Write your package code here.
-
+    export get_stencil
 end

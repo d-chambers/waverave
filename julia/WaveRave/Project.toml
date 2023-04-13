@@ -3,6 +3,9 @@ uuid = "8d2a3bad-826d-4e97-b88c-1069f7cd513b"
 authors = ["Derrick Chambers <d-chambers@users.noreply.github.com> and contributors"]
 version = "1.0.0-DEV"
 
+[deps]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
 [compat]
 julia = "1"
 

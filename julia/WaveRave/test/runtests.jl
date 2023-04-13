@@ -1,6 +1,6 @@
 using WaveRave
 using Test
 
-@testset "WaveRave.jl" begin
-    # Write your tests here.
+@testset "stencil" begin
+    include("test_stencil.jl")
 end
