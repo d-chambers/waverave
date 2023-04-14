@@ -3,6 +3,7 @@ General control functions for WaveRave
 """
 
 using Base
+include("constants.jl")
 
 
 """
@@ -20,7 +21,7 @@ A Ricker wavelet source.
     amplitude is the amplitude of the source.
 """
 Base.@kwdef struct RickerSource <: AbstractSource
-    position:: Array{Real}
+    position:: AbstractArray{Real, 1}
     time_delay:: Real = 0.0
     frequency:: Real = 10.0
     amplitude:: Real = 1.0
@@ -39,15 +40,14 @@ A struct to hold the control parameters for the simulation
     dt: time step in seconds
 """
 Base.@kwdef struct WaveSimulation
-    p_velocity:: Array{Real}
-    density:: Array{Real}
-    x_values:: tuple{Array{Real}}
+    p_velocity:: OneToThreeDimRealArray
+    density:: OneToThreeDimRealArray
+    x_values:: Array{Array{Real, 1}}
     sources:: Array{AbstractSource, 1}
     dt:: Real
     # Optional parameters
-    cfl:: Real = 0.5
-    nodes_per_wavelength:: int = 10
-
+    cfl_limit:: Real = 0.5
+    nodes_per_wavelength:: Int = 10
 
     function WaveSimulation(velocity, density, x_values, dt)
         """
@@ -55,7 +55,6 @@ Base.@kwdef struct WaveSimulation
         """
         wc = new(velocity, density, x_values, dt)
         # validate CFL, 
-        return new
-        end
+        return wc
+    end
  end
-
