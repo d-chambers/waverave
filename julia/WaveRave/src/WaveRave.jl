@@ -1,6 +1,10 @@
 module WaveRave
     include("Stencil.jl")
-    include("Control.jl")
+    export get_stencil
 
-    export get_stencil, WaveSimulation, RickerSource
+    include("Control.jl")
+    export WaveSimulation, validate_simulation
+
+    include("Sources.jl")
+    export ExplosiveRickerSource, get_source_time_function
 end
