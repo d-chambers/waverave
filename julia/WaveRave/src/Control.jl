@@ -2,6 +2,9 @@
 General control functions for WaveRave
 """
 
+using Base
+
+
 """
 Abstract type for a source. i.e. a Ricker wavelet.
 """
@@ -16,12 +19,11 @@ A Ricker wavelet source.
     frequency is in Hz.
     amplitude is the amplitude of the source.
 """
-struct RickerSource <: AbstractSource
-
-    position: Array{<:float, Union{1, 2, 3}}
-    time_delay: float = 0.0
-    frequency: float = 10.0
-    amplitude: float = 1.0
+Base.@kwdef struct RickerSource <: AbstractSource
+    position:: Array{Real}
+    time_delay:: Real = 0.0
+    frequency:: Real = 10.0
+    amplitude:: Real = 1.0
 end
 
 
@@ -36,15 +38,15 @@ A struct to hold the control parameters for the simulation
     sources: An array of sources to fire in the simulation.
     dt: time step in seconds
 """
-struct WaveSimulation
-    p_velocity: Array{<:float, Union{1, 2, 3}}
-    density: Array{<:float, Union{1, 2, 3}}
-    x_values: tuple{Array{<:float, 1}}
-    sources: Array{<:AbstractSource, 1}
-    dt: float
+Base.@kwdef struct WaveSimulation
+    p_velocity:: Array{Real}
+    density:: Array{Real}
+    x_values:: tuple{Array{Real}}
+    sources:: Array{AbstractSource, 1}
+    dt:: Real
     # Optional parameters
-    cfl: float = 0.5
-    nodes_per_wavelength: int = 10
+    cfl:: Real = 0.5
+    nodes_per_wavelength:: int = 10
 
 
     function WaveSimulation(velocity, density, x_values, dt)
@@ -54,5 +56,6 @@ struct WaveSimulation
         wc = new(velocity, density, x_values, dt)
         # validate CFL, 
         return new
+        end
  end
 
