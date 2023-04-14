@@ -23,17 +23,17 @@ A struct to hold the control parameters for the simulation
         will be used to calculate the wavelength.
 """
 Base.@kwdef struct WaveSimulation
-    dt :: Real
-    x_values :: AbstractArray{AbstractArray}
-    p_velocity :: AbstractArray
-    density :: AbstractArray
-    sources :: Array{AbstractSource, 1}
+    dt::Real
+    x_values::AbstractArray{AbstractArray}
+    p_velocity::AbstractArray
+    density::AbstractArray
+    sources::Array{AbstractSource,1}
     # Optional parameters
-    cfl_limit:: Real = 0.5
-    nodes_per_wavelength:: Int = 10
-    processors:: Int = 1
-    division:: String = "grid"
- end
+    cfl_limit::Real = 0.5
+    nodes_per_wavelength::Int = 10
+    processors::Int = 1
+    division::String = "grid"
+end
 
 
 # --- Validation functions ---
@@ -47,20 +47,20 @@ Base.@kwdef struct WaveSimulation
         4. Check CFL limit is not exceeded. 
         5. Check that nodes_per_wavelegnth is met.
 """
- function validate_simulation(simulation:: WaveSimulation)
+function validate_simulation(simulation::WaveSimulation)
     check_array_dimensions(simulation)
     check_xvalue_lengths(simulation)
     check_xvalues(simulation)
     check_cfl(simulation)
     check_wavelength_resolution(simulation)
     return true
- end
+end
 
 
 """
     Check that all arrays have the same dimensions.
 """
-function check_array_dimensions(simulation:: WaveSimulation)
+function check_array_dimensions(simulation::WaveSimulation)
     if !all(size(simulation.p_velocity) .== size(simulation.density))
         error("p_velocity and density arrays must have the same dimensions")
     end
@@ -70,7 +70,7 @@ end
 """
 Check that the spatial values have consistent shapes with the property arrays.
 """
-function check_xvalue_lengths(simulation:: WaveSimulation)
+function check_xvalue_lengths(simulation::WaveSimulation)
     grid_shape = size(simulation.p_velocity)
     for (ind, x) in enumerate(simulation.x_values)
         if size(x)[1] != grid_shape[ind]
@@ -83,7 +83,7 @@ end
 """
 Check that the spatial values are monotonic and evenly sampled.
 """
-function check_xvalues(simulation:: WaveSimulation)
+function check_xvalues(simulation::WaveSimulation)
     for (ind, x) in enumerate(simulation.x_values)
         diffs = diff(x)
         if !all(diffs .> 0)
@@ -94,28 +94,28 @@ function check_xvalues(simulation:: WaveSimulation)
         end
     end
 end
-   
 
 
- """
-    Check the CFL limit is not exceeded.
- """
-function check_cfl(simulation:: WaveSimulation)
+
+"""
+   Check the CFL limit is not exceeded.
+"""
+function check_cfl(simulation::WaveSimulation)
     dx_min = minimum([minimum(diff(x)) for x in simulation.x_values])
     max_velocity = maximum(simulation.p_velocity)
     dt = simulation.dt
-    if dx_min/dt < max_velocity * simulation.cfl_limit
+    if dx_min / dt < max_velocity * simulation.cfl_limit
         info = "$(dx_min/dt) < $max_velocity * $(simulation.cfl_limit)"
         error("CFL limit exceeded! $info")
     end
-    
+
 end
 
 
 """
 Check wavelength resolution is met.
 """
-function check_wavelength_resolution(simulation:: WaveSimulation)
+function check_wavelength_resolution(simulation::WaveSimulation)
     # Get the slowest velocity and highest frequency source
     slowest_velocity = minimum(simulation.p_velocity)
     highest_frequency = maximum([source.frequency for source in simulation.sources])
