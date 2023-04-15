@@ -2,6 +2,8 @@
 Module for getting stencils of varius lengths
 """
 
+export get_stencil
+
 """
     get_stencil(x::AbstractVector{<:Real}, x₀::Real, m::Integer)
 

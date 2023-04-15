@@ -2,6 +2,9 @@
 Module defining sources.
 """
 
+
+export AbstractSource, ExplosiveRickerSource, get_source_time_function, get_effective_frequencies
+
 """
 Abstract type for a source. i.e. a Ricker wavelet.
 """
@@ -46,7 +49,6 @@ Get the "effective" frequencies for a source.
 This is used to the wavelength 
 """
 function get_effective_frequencies(source::ExplosiveRickerSource)::Tuple{Real,Real}
-
     f_0 = source.frequency
     return NaN, f_0 * 2.5
 end

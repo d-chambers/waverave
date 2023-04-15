@@ -21,6 +21,16 @@ A struct to hold the control parameters for the simulation
     nodes_per_wavelength: The number of nodes per wavelength to enforce.
         The slowest velocity in the simulation and highest frequency source
         will be used to calculate the wavelength.
+    processors: The number of processors (MPI workers) to use in the simulation.
+    distribution_strategy: The strategy to use for distributing the simulation
+        across the processors. options are: 
+        :grid - The domian is decomposed into evenly sized block subdomains.
+        :stip - The domain is decomposed into evenly sized strip subdomains.
+    space_order: The number of points right of the centeral point for the 
+        derivative estimation in space. Centeral is always used.
+    time_order: The number of points right of the centeral point for the 
+        derivative estimation in space. Centeral is always used.
+
 """
 Base.@kwdef struct WaveSimulation
     dt::Real
@@ -32,7 +42,10 @@ Base.@kwdef struct WaveSimulation
     cfl_limit::Real = 0.5
     nodes_per_wavelength::Int = 10
     processors::Int = 1
-    division::String = "grid"
+    distribution_strategy::Symbol = :grid
+    space_order::Int = 1
+    time_order::Int = 1
+    
 end
 
 
