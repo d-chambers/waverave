@@ -5,10 +5,11 @@ Module for testing utils.
 using Test
 using Debugger
 
+import WaveRave
 using WaveRave: find_division_shape
 
 
-@testset "test 1D" begin
+@testset "test 1D find_division_shape" begin
     # happy paths
     @test find_division_shape(10, (100,)) == ([10], [10])
     @test find_division_shape(1, (100,)) == ([1], [100])
@@ -18,12 +19,18 @@ using WaveRave: find_division_shape
 
 end
 
-@testset "test 2D" begin
+
+@testset "test 2D find_division_shape" begin
     # happy paths
-    @enter find_division_shape(4, (100,100))
-    @enter find_division_shape(4, (100,100)) == ([2, 2], [50, 50])
-    # @test find_division_shape(2, (100,100)) == [100, 50]
-    # @test find_division_shape(6, (300,200)) == [100, 100]
-    # # ensure error thrown
-    # @test_throws "cannot be divided" find_division_shape(11, (100,))
+    @test find_division_shape(4, (100,100)) == ([2, 2], [50, 50])
+    @test find_division_shape(2, (100,100)) == ([2, 1], [50, 100])
+    @test find_division_shape(6, (300,200)) == ([3, 2], [100, 100])
+    # ensure error thrown
+    @test_throws "cannot be divided" find_division_shape(7, (100, 100))
+end
+
+
+
+@testset "1D chunk grid" begin
+    @test true
 end

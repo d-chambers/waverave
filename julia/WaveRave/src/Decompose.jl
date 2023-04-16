@@ -7,6 +7,7 @@ using Combinatorics
 
 
 include("Control.jl")
+include("Utils.jl")
 
 
 """
@@ -35,7 +36,7 @@ function grid_decomposition(
     ):: Tuple(AbstractArray{Real, 1}, AbstractArray{Real, 1})
 
     _check_inputs(array, x_values, id, id_max, overlap, boundary_fill)
-    shape 
+    
 
 end
 
