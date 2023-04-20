@@ -37,7 +37,6 @@ function grid_decomposition(
 
     _check_inputs(array, x_values, id, id_max, overlap, boundary_fill)
     
-
 end
 
 
@@ -59,3 +58,8 @@ function _check_inputs(
     @assert size(array) == [len(x) for x in x_values] "array and x_values must be the same length"
 
 end
+
+
+function get_controll_chunk(global_control)
+end
+    

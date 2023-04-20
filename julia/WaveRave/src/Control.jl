@@ -6,10 +6,11 @@ using Base
 using Statistics
 
 include("Sources.jl")
+include("Receivers.jl")
 
 
 """
-A struct to hold the control parameters for the simulation
+    A struct to hold the control parameters for the simulation
 
 # Arguments
     dx: dx values along each dimension in (m)
@@ -17,6 +18,7 @@ A struct to hold the control parameters for the simulation
     p_velocity: An array of velocities in (m/s)
     density: An array of density values in (kg/m^3)
     sources: An array of sources to fire in the simulation.
+    receivers: An array of receivers for recording wavefields.
     cfl_limit: The CFL limit to enforce. 0.5 is recommended.
     nodes_per_wavelength: The number of nodes per wavelength to enforce.
         The slowest velocity in the simulation and highest frequency source
@@ -26,6 +28,7 @@ A struct to hold the control parameters for the simulation
         across the processors. options are: 
         :grid - The domian is decomposed into evenly sized block subdomains.
         :stip - The domain is decomposed into evenly sized strip subdomains.
+    distributed_shape: The shape of each distributed chunk.
     space_order: The number of points right of the centeral point for the 
         derivative estimation in space. Centeral is always used.
     time_order: The number of points right of the centeral point for the 
@@ -37,15 +40,22 @@ Base.@kwdef struct WaveSimulation
     x_values::AbstractArray{AbstractArray}
     p_velocity::AbstractArray
     density::AbstractArray
-    sources::Array{AbstractSource,1}
+    sources::Array{AbstractSource, 1}
     # Optional parameters
+    receivers::Array{Receiver, 1} = []
     cfl_limit::Real = 0.5
     nodes_per_wavelength::Int = 10
     processors::Int = 1
-    distribution_strategy::Symbol = :grid
+    distribution_strategy:: Symbol = :grid
+    distributed_shape:: Union{Tuple, Nothing} = nothing
     space_order::Int = 1
     time_order::Int = 1
-    
+end
+
+
+function (wavesim::WaveSimulation)()
+    validate_simulation(wavesim)
+    return wavesim
 end
 
 
@@ -126,7 +136,7 @@ end
 
 
 """
-Check wavelength resolution is met.
+    Check wavelength resolution is met.
 """
 function check_wavelength_resolution(simulation::WaveSimulation)
     # Get the slowest velocity and highest frequency source
@@ -139,3 +149,27 @@ function check_wavelength_resolution(simulation::WaveSimulation)
         error("Wavelength resolution not met! $info")
     end
 end
+
+
+
+"""
+    Local control structure (each rank gets one!)
+
+See Docs on Simulation for descriptions.
+"""
+Base.@kwdef struct LocalSimulation
+    dt::Real
+    x_values::AbstractArray{AbstractArray}
+    p_velocity::AbstractArray
+    density::AbstractArray
+    sources::Array{AbstractSource, 1}
+    receiveres::Array{Receiver, 1}
+    # Optional parameters
+    space_order::Int = 1
+    time_order::Int = 1
+end
+
+
+function get_local(simulation::WaveSimulation, processor) :: LocalSimulation
+end
+
