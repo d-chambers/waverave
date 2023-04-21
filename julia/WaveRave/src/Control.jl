@@ -10,10 +10,23 @@ include("Receivers.jl")
 
 
 """
+    Get dt based on coordinates.
+
+This is a little quick and dirty; we should probably match
+dx with specific velocities. 
+"""
+function get_dt(coords, velocity, cfl_limit)
+    max_vel = maximum(velocity)
+    min_dx = minimum([minimum(x[2:end] - x[1:end - 1]) for x in coords])
+    return (min_dx / max_vel) * cfl_limit
+end
+
+
+"""
     A struct to hold the control parameters for the simulation
 
 # Arguments
-    dx: dx values along each dimension in (m)
+    coords: coordinates along each dimension. Should be evenly sampled.
     p_velocity: An array of velocities in (m/s)
     sources: An array of sources to fire in the simulation.
     dt: time step in seconds, if None calculate based on CFL.
@@ -22,7 +35,6 @@ include("Receivers.jl")
     nodes_per_wavelength: The number of nodes per wavelength to enforce.
         The slowest velocity in the simulation and highest frequency source
         will be used to calculate the wavelength.
-    processors: The number of processors (MPI workers) to use in the simulation.
     distribution_strategy: The strategy to use for distributing the simulation
         across the processors. options are: 
         :grid - The domian is decomposed into evenly sized block subdomains.
@@ -32,22 +44,20 @@ include("Receivers.jl")
         derivative estimation in space. Centeral is always used.
     time_order: The number of points right of the centeral point for the 
         derivative estimation in space. Centeral is always used.
-
 """
-Base.@kwdef struct WaveSimulation
-    x_values::AbstractArray{AbstractArray}
+Base.@kwdef mutable struct WaveSimulation
+    coords::AbstractArray{AbstractArray}
     p_velocity::AbstractArray
     sources::Array{AbstractSource,1}
     # Optional parameters
-    dt::Real = nothing
     receivers::Array{Receiver, 1} = []
     cfl_limit::Real = 0.5
     nodes_per_wavelength::Int = 10
-    processors::Int = 1
     distribution_strategy:: Symbol = :grid
     distributed_shape:: Union{Tuple, Nothing} = nothing
     space_order::Int = 5
     time_order::Int = 1
+    dt::Real = get_dt(coords, p_velocity, cfl_limit)
 end
 
 
@@ -93,7 +103,7 @@ Check that the spatial values have consistent shapes with the property arrays.
 """
 function check_xvalue_lengths(simulation::WaveSimulation)
     grid_shape = size(simulation.p_velocity)
-    for (ind, x) in enumerate(simulation.x_values)
+    for (ind, x) in enumerate(simulation.coords)
         if size(x)[1] != grid_shape[ind]
             error("x_value lengths not consistent with grid shape in dimension $ind")
         end
@@ -105,13 +115,13 @@ end
 Check that the spatial values are monotonic and evenly sampled.
 """
 function check_xvalues(simulation::WaveSimulation)
-    for (ind, x) in enumerate(simulation.x_values)
+    for (ind, x) in enumerate(simulation.coords)
         diffs = diff(x)
         if !all(diffs .> 0)
-            error("x_values must be monotonic!, they are not in dimension $ind")
+            error("coords must be monotonic!, they are not in dimension $ind")
         end
         if !all(diffs .≈ median(diffs))
-            error("x_values must be evenly sampled!, they are not in dimension $ind")
+            error("coords must be evenly sampled!, they are not in dimension $ind")
         end
     end
 end
@@ -122,7 +132,7 @@ end
    Check the CFL limit is not exceeded.
 """
 function check_cfl(simulation::WaveSimulation)
-    dx_min = minimum([minimum(diff(x)) for x in simulation.x_values])
+    dx_min = minimum([minimum(diff(x)) for x in simulation.coords])
     max_velocity = maximum(simulation.p_velocity)
     dt = simulation.dt
     if dx_min / dt < max_velocity * simulation.cfl_limit
@@ -141,7 +151,7 @@ function check_wavelength_resolution(simulation::WaveSimulation)
     slowest_velocity = minimum(simulation.p_velocity)
     highest_frequency = maximum([source.frequency for source in simulation.sources])
     wavelength = slowest_velocity / highest_frequency
-    dx_min = minimum([minimum(diff(x)) for x in simulation.x_values])
+    dx_min = minimum([minimum(diff(x)) for x in simulation.coords])
     if wavelength / dx_min < simulation.nodes_per_wavelength
         info = "$wavelength / $dx_min < $(simulation.nodes_per_wavelength)"
         error("Wavelength resolution not met! $info")
@@ -149,24 +159,15 @@ function check_wavelength_resolution(simulation::WaveSimulation)
 end
 
 
-
 """
     Local control structure (each rank gets one!)
 
 See Docs on Simulation for descriptions.
 """
-Base.@kwdef struct LocalSimulation
-    dt::Real
-    x_values::AbstractArray{AbstractArray}
+Base.@kwdef struct LocalGrid
+    coords::AbstractArray{AbstractArray}
     p_velocity::AbstractArray
     sources::Array{AbstractSource, 1}
-    receiveres::Array{Receiver, 1}
-    # Optional parameters
-    space_order::Int = 1
-    time_order::Int = 1
-end
-
-
-function get_local(simulation::WaveSimulation, processor) :: LocalSimulation
+    receivers::Array{Receiver, 1} = []
 end
 

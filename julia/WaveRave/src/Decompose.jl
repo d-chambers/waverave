@@ -60,6 +60,91 @@ function _check_inputs(
 end
 
 
-function get_controll_chunk(global_control)
+"""
+    Get the length of the division, before padding
+"""
+function get_div_len(rank, size, coord_len)
+    div_len = coord_len ÷ size
+    if coord_len % size > rank  # if there is leftover sizes
+        div_len += 1
+    end
+    return div_len
+end
+
+
+"""
+    Decompose an array into n subdomains using pencil decomposition.
+
+Returns both the new coords and the padded arrays.
+Decomposes over the largest dimension and fills the padded regions
+outside of the grid with the last grid value.
+"""
+function pencil_decomposition(coords, array, pad, rank, rank_count)
+    @assert(pad >= 0, "pad must be greater than or equal to 0")
+    # get the largest dimension
+    dim = argmax(size(array))
+    out_coords = copy(coords)
+    div_coord = out_coords[dim]
+    cord_len = length(div_coord)
+    # get div lens    
+    div_lens = [get_div_len(x, rank_count, cord_len) for x in 0:1:rank_count-1]
+
+    interfaces = cat([1], cumsum(div_lens), dims=1)
+    start_ind, end_ind = interfaces[rank + 1], interfaces[rank + 2]
+
+    # get start of division
+    out_coords[dim] = div_coord[start_ind:end_ind]
+    # get padded array
+    out = zeros(size(array) .+ 2 * pad)
+    # first fill in non padded
+
+
+
+    
+
+    
+end
+
+
+
+
+
+"""
+Get the local simulation for a given rank of specified size.
+"""
+function get_local_simulation(
+    global_simulation:: WaveSimulation,
+    rank:: Int,
+    rank_count:: Int,
+    decomposition:: Symbol = :pencil,
+    ) :: LocalGrid
+    if decomposition != :pencil
+        error("only pencil decomposition supported now.")
+    end
+
+    coords, vel = pencil_decomposition(
+        global_simulation.coords, 
+        global_simulation.p_velocity, 
+        global_simulation.space_order,
+        rank,
+        rank_count,
+    )
+
+    sources = [
+        x for x in global_simulation.sources 
+        if in_coords(x.location, coords)
+    ]
+    receivers = [
+        x for x in global_simulation.receivers 
+        if in_coords(x.location, coords)
+    ]
+
+    out = LocalGrid(
+        coords=coords,
+        p_velocity=vel,
+        sources=sources,
+        receivers=receivers,
+    )
+    return out
 end
     

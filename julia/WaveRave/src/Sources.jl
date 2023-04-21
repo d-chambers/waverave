@@ -22,7 +22,7 @@ A Ricker wavelet source from a shot.
 Base.@kwdef struct ExplosiveRickerSource <: AbstractSource
     location::AbstractArray
     time_delay::Real = 0.0
-    frequency::Real = 10.0
+    frequency::Real = 20.0
     amplitude::Real = 1.0
 end
 

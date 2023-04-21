@@ -93,3 +93,22 @@ function _check_inputs(
 
 end
 
+
+function mkdir_if_not_exists(path:: String)
+    if !isdir(path)
+        mkdir(path)
+    end
+end
+
+
+"""
+    Function to determine if a location is inside the coordinates.
+"""
+function in_coords(location, coords)
+    @assert length(location) == length(coords)
+    in_coords = [
+        (loc >= coor[1]) & (loc <= coor[end])
+        for (loc, coor) in zip(location, coords)
+    ]
+    return all(in_coords)
+end
