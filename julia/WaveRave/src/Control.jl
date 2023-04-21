@@ -36,7 +36,7 @@ Base.@kwdef struct WaveSimulation
     dt::Real
     x_values::AbstractArray{AbstractArray}
     p_velocity::AbstractArray
-    density::AbstractArray
+    # density::AbstractArray
     sources::Array{AbstractSource,1}
     # Optional parameters
     cfl_limit::Real = 0.5
