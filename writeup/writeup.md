@@ -4,7 +4,9 @@ Term project for Math 540 (CSM, spring 2023)
 
 Derrick Chambers, Peiyao Li, and Ayon Ghosh
 
-![](images/waverave.png)
+<img src="images/waverave.png" width="400" height="350" />
+
+
 
 # Introduction
 
