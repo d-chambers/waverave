@@ -14,10 +14,9 @@ include("Receivers.jl")
 
 # Arguments
     dx: dx values along each dimension in (m)
-    dt: time step in seconds
     p_velocity: An array of velocities in (m/s)
-    density: An array of density values in (kg/m^3)
     sources: An array of sources to fire in the simulation.
+    dt: time step in seconds, if None calculate based on CFL.
     receivers: An array of receivers for recording wavefields.
     cfl_limit: The CFL limit to enforce. 0.5 is recommended.
     nodes_per_wavelength: The number of nodes per wavelength to enforce.
@@ -36,21 +35,18 @@ include("Receivers.jl")
 
 """
 Base.@kwdef struct WaveSimulation
-    dt::Real
     x_values::AbstractArray{AbstractArray}
     p_velocity::AbstractArray
-    # density::AbstractArray
     sources::Array{AbstractSource,1}
-    sources::Array{AbstractSource, 1}
-
     # Optional parameters
+    dt::Real = nothing
     receivers::Array{Receiver, 1} = []
     cfl_limit::Real = 0.5
     nodes_per_wavelength::Int = 10
     processors::Int = 1
     distribution_strategy:: Symbol = :grid
     distributed_shape:: Union{Tuple, Nothing} = nothing
-    space_order::Int = 1
+    space_order::Int = 5
     time_order::Int = 1
 end
 
@@ -73,7 +69,7 @@ end
         5. Check that nodes_per_wavelegnth is met.
 """
 function validate_simulation(simulation::WaveSimulation)
-    check_array_dimensions(simulation)
+    # check_array_dimensions(simulation)
     check_xvalue_lengths(simulation)
     check_xvalues(simulation)
     check_cfl(simulation)
@@ -82,14 +78,14 @@ function validate_simulation(simulation::WaveSimulation)
 end
 
 
-"""
-    Check that all arrays have the same dimensions.
-"""
-function check_array_dimensions(simulation::WaveSimulation)
-    if !all(size(simulation.p_velocity) .== size(simulation.density))
-        error("p_velocity and density arrays must have the same dimensions")
-    end
-end
+# """
+#     Check that all arrays have the same dimensions.
+# """
+# function check_array_dimensions(simulation::WaveSimulation)
+#     if !all(size(simulation.p_velocity) .== size(simulation.density))
+#         error("p_velocity and density arrays must have the same dimensions")
+#     end
+# end
 
 
 """
@@ -163,7 +159,6 @@ Base.@kwdef struct LocalSimulation
     dt::Real
     x_values::AbstractArray{AbstractArray}
     p_velocity::AbstractArray
-    density::AbstractArray
     sources::Array{AbstractSource, 1}
     receiveres::Array{Receiver, 1}
     # Optional parameters
