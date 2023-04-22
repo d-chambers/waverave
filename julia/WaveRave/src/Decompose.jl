@@ -71,38 +71,65 @@ function get_div_len(rank, size, coord_len)
     return div_len
 end
 
+using Debugger
+"""
+    Fill the array with closest values around padding.
+"""
+function fill_pad_array!(array, pad)
+    # first get corners
+    combs = [(1:pad + 1, x-(pad+1):x) for x in size(array)]
+
+    for inds in Iterators.product(combs...)
+        vals = array[inds...]
+        array[inds...] .= maximum(vals[isfinite.(vals)] )
+    end
+    # then get rows/columns
+    for i in pad:size(array)[1]-pad
+        array[i, 1:pad] .= array[i, pad + 1] 
+        array[i, end-pad:end] .= array[i, end - pad - 1]
+    end
+    for i in pad:size(array)[2]-pad
+        array[1:pad, i] .= array[pad + 1, i] 
+        array[end-pad:end, i] .= array[end - pad - 1, i]
+    end
+
+    return array
+end
+
 
 """
     Decompose an array into n subdomains using pencil decomposition.
 
 Returns both the new coords and the padded arrays.
 Decomposes over the largest dimension and fills the padded regions
-outside of the grid with the last grid value.
+outside of the grid with the last grid value. Assumes 2D array
 """
 function pencil_decomposition(coords, array, pad, rank, rank_count)
     @assert(pad >= 0, "pad must be greater than or equal to 0")
     # get the largest dimension
+    @assert(length(coords) == 2, "only 2d for now.")
+    origin_index = [1:length(x) for x in coords]
     dim = argmax(size(array))
     out_coords = copy(coords)
     div_coord = out_coords[dim]
     cord_len = length(div_coord)
+
     # get div lens    
     div_lens = [get_div_len(x, rank_count, cord_len) for x in 0:1:rank_count-1]
-
     interfaces = cat([1], cumsum(div_lens), dims=1)
     start_ind, end_ind = interfaces[rank + 1], interfaces[rank + 2]
-
+    origin_index[dim] = start_ind:end_ind
     # get start of division
-    out_coords[dim] = div_coord[start_ind:end_ind]
-    # get padded array
-    out = zeros(size(array) .+ 2 * pad)
-    # first fill in non padded
-
-
-
-    
-
-    
+    out_coords[dim] = div_coord[start_ind: end_ind]
+    # init padded array and fill with values from original array
+    pad_arrays = [x.start + pad:pad + x.stop for x in origin_index]
+    padded_size = [length(x) for x in out_coords] .+ 2 * pad
+    out = fill(NaN, padded_size...)
+    out[pad_arrays...] = array[origin_index...]
+    fill_pad_array!(out, pad)
+    # last assignment ensures nothing was overwritten with sloppy edge padding.
+    out[pad_arrays...] = array[origin_index...]
+    return out_coords, out, origin_index
 end
 
 
@@ -122,13 +149,14 @@ function get_local_simulation(
         error("only pencil decomposition supported now.")
     end
 
-    coords, vel = pencil_decomposition(
+    coords, vel, global_index = pencil_decomposition(
         global_simulation.coords, 
         global_simulation.p_velocity, 
         global_simulation.space_order,
         rank,
         rank_count,
     )
+    @bp
 
     sources = [
         x for x in global_simulation.sources 
@@ -144,6 +172,7 @@ function get_local_simulation(
         p_velocity=vel,
         sources=sources,
         receivers=receivers,
+        global_index=global_index,
     )
     return out
 end

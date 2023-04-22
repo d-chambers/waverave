@@ -167,7 +167,9 @@ See Docs on Simulation for descriptions.
 Base.@kwdef struct LocalGrid
     coords::AbstractArray{AbstractArray}
     p_velocity::AbstractArray
+    origin_inds::AbstractArray{StepRange}=[]
     sources::Array{AbstractSource, 1}
     receivers::Array{Receiver, 1} = []
+    global_index::AbstractArray = []
 end
 
