@@ -2,7 +2,7 @@
 Module for getting stencils of varius lengths
 """
 
-export get_stencil
+export get_stencil, get_stencil_coefs
 
 """
     get_stencil(x::AbstractVector{<:Real}, x₀::Real, m::Integer)
@@ -19,4 +19,13 @@ function get_stencil(x::AbstractVector{<:Real}, x₀::Real, m::Integer)
     m in ℓ || throw(ArgumentError("order $m ∉ $ℓ"))
     A = @. (x' - x₀)^ℓ / factorial(ℓ)
     return A \ (ℓ .== m) # vector of weights w
+end
+
+
+"""
+    Get generic stencil coeficients for central difference.
+"""
+function get_stencil_coefs(order, derivative=2)
+    dx = -order:1:order
+    return get_stencil(dx, 0, derivative)
 end

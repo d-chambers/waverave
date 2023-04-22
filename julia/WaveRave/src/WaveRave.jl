@@ -3,7 +3,7 @@ module WaveRave
 using Reexport
 
 include("Stencil.jl")
-export get_stencil
+export get_stencil, get_stencil_coefs
 
 include("Control.jl")
 export WaveSimulation, validate_simulation, LocalGrid

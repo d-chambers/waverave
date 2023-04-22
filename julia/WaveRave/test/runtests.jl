@@ -17,3 +17,7 @@ end
 @testset "utils" begin
     include("test_utils.jl")
 end
+
+@testset "2D E2@" begin
+    include("test_2d_end_to_end.jl")
+end

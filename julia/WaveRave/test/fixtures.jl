@@ -47,10 +47,10 @@ end
 This is a very specific case used for the Math 540 term
 project.
 """
-function get_2d_test_control(dx=1)
+function get_2d_test_control(dx=5)
     function get_velocity_and_coords(fast_vel=5000.0, slow_vel=3500.0)
-        x_coord = collect([0:dx:499]...) .+ 0.5
-        z_coord = collect([0:dx:299]...) .+ 0.5
+        x_coord = collect([0:dx:499]...) .+ dx/2
+        z_coord = collect([0:dx:299]...) .+ dx/2
 
         in_slow_region = @. (z_coord > 135) & (z_coord < 165)
         vel = fill(fast_vel, length(z_coord), length(x_coord))

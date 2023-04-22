@@ -156,7 +156,6 @@ function get_local_simulation(
         rank,
         rank_count,
     )
-    @bp
 
     sources = [
         x for x in global_simulation.sources 

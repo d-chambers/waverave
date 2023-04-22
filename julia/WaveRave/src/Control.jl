@@ -29,7 +29,7 @@ end
     coords: coordinates along each dimension. Should be evenly sampled.
     p_velocity: An array of velocities in (m/s)
     sources: An array of sources to fire in the simulation.
-    dt: time step in seconds, if None calculate based on CFL.
+    time_max: Time to run the simulation, in seconds.
     receivers: An array of receivers for recording wavefields.
     cfl_limit: The CFL limit to enforce. 0.5 is recommended.
     nodes_per_wavelength: The number of nodes per wavelength to enforce.
@@ -44,11 +44,13 @@ end
         derivative estimation in space. Centeral is always used.
     time_order: The number of points right of the centeral point for the 
         derivative estimation in space. Centeral is always used.
+    dt: time step in seconds, if None calculate based on CFL.
 """
 Base.@kwdef mutable struct WaveSimulation
     coords::AbstractArray{AbstractArray}
     p_velocity::AbstractArray
     sources::Array{AbstractSource,1}
+    time_max = 5
     # Optional parameters
     receivers::Array{Receiver, 1} = []
     cfl_limit::Real = 0.5
