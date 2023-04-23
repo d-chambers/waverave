@@ -49,6 +49,24 @@ end
 
 
 """
+Make Laplacian image
+"""
+function make_laplace_image(wave_sim)
+    image = zeros(fill(wave_sim.space_order*2+1, length(wave_sim.coords))...)
+    center_coords::Array{Any} = fill(wave_sim.space_order+1, length(wave_sim.coords)...)
+    for (num, coord) in enumerate(wave_sim.coords)
+        imge_coords = copy(center_coords)
+        imge_coords[num] = Colon()
+        dx = coord[2] - coord[1]
+        stencil = get_stencil_coefs(wave_sim.space_order) ./ (dx^2)
+        image[imge_coords...] .+= stencil
+    end
+    return image
+    
+end
+
+
+"""
     Run the simulation.
 # Arguments
 - wave_sim - Parameters of the simulation to run.
@@ -69,10 +87,9 @@ function run_wave_simulation(
     time = collect(0:wave_sim.dt:wave_sim.time_max)
     setup_io(rank, output_directory)
     local_sim::LocalGrid = get_local_simulation(wave_sim, rank, rank_count)
-    dx_sq = [(x[2] - x[1])^2 for x in local_sim.coords]  # dx in all dims
     dt_sq = wave_sim.dt ^ 2
     vel_sq = local_sim.p_velocity .^ 2
-    coefs = get_stencil_coefs(wave_sim.space_order)
+    image = make_laplace_image(wave_sim)
     # initiliaze arrays for previous, current, and next time.
     tp = zeros(size(local_sim.p_velocity))
     tc = zeros(size(local_sim.p_velocity))
@@ -84,13 +101,19 @@ function run_wave_simulation(
     # time step
     for (t_ind, t) in enumerate(time)
         update_ghost_regions(local_sim, rank, rank_count)
-
-        
-        
-
+        # save 
+        if t_ind % snapshot_interval == 0
+            save_wave()
+        end
+        # run simulation
+        laplace = imfilter(tc, image) # , Inner())
+        tn = @. vel_sq * laplace * dt_sq + 2 * tc - tp
+        for (source_ind, stf) in zip(source_inds, source_time_functions)
+            tn[source_ind...] .+= stf[t_ind] .* dt_sq 
+        end
+        apply_boundary(tn, boundary_condition)
+        # rotate time arrays
+        tc, tp = tn, tc
     end
-    
-    # conduct time stepping
-
     
 end
