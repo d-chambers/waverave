@@ -57,7 +57,7 @@ Base.@kwdef mutable struct WaveSimulation
     nodes_per_wavelength::Int = 10
     distribution_strategy:: Symbol = :grid
     distributed_shape:: Union{Tuple, Nothing} = nothing
-    space_order::Int = 5
+    space_order::Int = 1
     time_order::Int = 1
     dt::Real = get_dt(coords, p_velocity, cfl_limit)
 end

@@ -4,7 +4,7 @@ Functions for decomposing domains into subdomains.
 
 using Base
 using Combinatorics
-
+using ImageFiltering
 
 include("Control.jl")
 include("Utils.jl")
@@ -124,11 +124,10 @@ function pencil_decomposition(coords, array, pad, rank, rank_count)
     # init padded array and fill with values from original array
     pad_arrays = [x.start + pad:pad + x.stop for x in origin_index]
     padded_size = [length(x) for x in out_coords] .+ 2 * pad
-    out = fill(NaN, padded_size...)
-    out[pad_arrays...] = array[origin_index...]
-    fill_pad_array!(out, pad)
+    out = padarray(array[origin_index...], Pad(:replicate,fill(pad, length(coords))...))
     # last assignment ensures nothing was overwritten with sloppy edge padding.
-    out[pad_arrays...] = array[origin_index...]
+    # TODO: We need to make sure to update the values after padding with 
+    # correct values from adjacent local blocks.
     return out_coords, out, origin_index
 end
 

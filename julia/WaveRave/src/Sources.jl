@@ -31,12 +31,12 @@ end
 """
 Get the source time function for a RickerSource.
 """
-function get_source_time_function(source::ExplosiveRickerSource, time::AbstractArray{Real})
+function (source::ExplosiveRickerSource)(time::AbstractArray{<:Real})
     τ_0 = time .- source.time_delay
     f_0 = source.frequency
-    term1 = 1 - 2 * pi^2 * f_0^2 * τ_0^2
-    term2 = exp(-pi^2 * f_0^2 * τ_0^2)
-    return term1 * term2 * source.amplitude
+    term1 = 1 .- 2 * pi ^ 2 * f_0 ^ 2 * τ_0 .^ 2
+    term2 = exp.(-pi ^ 2 * f_0 ^ 2 * τ_0 .^ 2)
+    return term1 .* term2 .* source.amplitude
 end
 
 
