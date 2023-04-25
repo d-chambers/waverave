@@ -30,6 +30,7 @@ end
 end
 
 
-@testset "1D chunk grid" begin
-    @test true
+@testset "test make homogeneous model" begin
+    mod = WaveRave.make_homogeneous_model((300, 500), 5, 1_000)
+    @test size(mod) == (60, 100)
 end

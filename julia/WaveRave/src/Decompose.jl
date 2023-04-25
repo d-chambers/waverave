@@ -10,6 +10,7 @@ using Debugger
 include("Control.jl")
 include("Utils.jl")
 
+using .Control
 
 """
     A struct for keeping track of domain mappings.
@@ -22,6 +23,7 @@ Base.@kwdef struct DomainMap
     local_coord_limit_map
     domain_map
     neighbors_map
+    unpad_coord_map
     padding
     decomposition_type::Symbol
 end
@@ -80,9 +82,11 @@ function grid_decomposition(
     
 end
 
+
 function pencil_decomposition(wave_sim, rank_count)::DomainMap
     domain_shape = size(wave_sim.p_velocity)
     @assert length(domain_shape) <= 2  # only 1 or 2 d for now.
+    padding = wave_sim.space_order
     # decompose grid
     long_dim = argmax(domain_shape)
     long_size = domain_shape[long_dim]
@@ -95,13 +99,19 @@ function pencil_decomposition(wave_sim, rank_count)::DomainMap
     # Create a dict of Dict(rank => dimension index limits)
     index_map = Dict(x-1 => copy(glob_inds) for x in 1:rank_count)
     for i in 1:length(div_lens)
-        index_map[i-1][long_dim, :] = [interfaces[i]+1, interfaces[i+1]]
+        _nids = [interfaces[i]+1, interfaces[i+1]]
+        index_map[i-1][long_dim, :] = _nids
     end
+    unpad_coord_map = Dict(
+        i => [x[1]:x[2] for x in eachrow(v .+ padding)]
+        for (i, v) in index_map
+    )
     # get the same thing, but for coordinate limits.
     _coord_lims = [[minimum(x), maximum(x)] for x in wave_sim.coords]
     coord_limits::Array{Float64} = reduce(hcat, _coord_lims)'
     coord_limit_map = Dict(x-1 => copy(coord_limits) for x in 1:rank_count)
     coords_map = Dict(x-1 => copy(glob_coords) for x in 1:rank_count)
+    
     for (rank, inds) in index_map
         new_coords = [
             coord[ind[1]: ind[2]]
@@ -115,6 +125,7 @@ function pencil_decomposition(wave_sim, rank_count)::DomainMap
     domain_map = reshape(collect(0:rank_count-1), shape...)
     # get neighbor map
     neighbor_map = _get_neighbor_map(domain_map, coord_limits)
+
     out = DomainMap(
         global_coords=glob_coords,
         global_inds=glob_inds,
@@ -123,7 +134,8 @@ function pencil_decomposition(wave_sim, rank_count)::DomainMap
         local_coord_limit_map=coord_limit_map,
         domain_map=domain_map,
         neighbors_map=neighbor_map,
-        padding=wave_sim.space_order,
+        unpad_coord_map=unpad_coord_map,
+        padding=padding,
         decomposition_type=:pencil,
     )
     return out
@@ -280,6 +292,8 @@ function get_padded_local_array(domain_map::DomainMap, array, rank)
     pad_fill = fill(domain_map.padding, length(domain_map.global_coords))
     unpadded = array[inds...]
     out = padarray(unpadded, Pad(:replicate, pad_fill...))
-    
+    # this is an offset array, need to get regular array.
+    shape = inds_array[:, 2] .+ 2*pad_fill
+    return reshape(out, shape...)
 end
     

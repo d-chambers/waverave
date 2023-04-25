@@ -12,7 +12,7 @@ include("Sources.jl")
 export ExplosiveRickerSource, get_source_time_function
 
 include("Utils.jl")
-export find_division_shape
+export find_division_shape, make_homogeneous_model
 
 include("Decompose.jl")
 export get_domain_map

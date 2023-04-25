@@ -5,6 +5,11 @@ General control functions for WaveRave
 using Base
 using Statistics
 
+
+module Control
+
+export WaveSimulation
+
 include("Sources.jl")
 include("Receivers.jl")
 
@@ -60,6 +65,8 @@ Base.@kwdef mutable struct WaveSimulation
     space_order::Int = 1
     time_order::Int = 1
     dt::Real = get_dt(coords, p_velocity, cfl_limit)
+    wavefield::AbstractArray = []
+    time_vector::AbstractArray{Float64, 1} = []
 end
 
 
@@ -175,3 +182,5 @@ Base.@kwdef struct LocalGrid
     global_index::AbstractArray = []
 end
 
+
+end

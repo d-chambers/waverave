@@ -123,3 +123,15 @@ function replace_ind(array, index::Int, value)
     out[index] = value
     return out
 end
+
+
+
+"""
+    Make homogeneous model
+"""
+function make_homogeneous_model(extents, dx, velocity)
+    shape = [convert(Int, x ÷ dx) for x in extents]
+    vel = convert(Float64, velocity)
+    out = fill(vel, shape...)
+    return out
+end
