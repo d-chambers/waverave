@@ -123,7 +123,7 @@ function pencil_decomposition(wave_sim, rank_count)::DomainMap
         local_coord_limit_map=coord_limit_map,
         domain_map=domain_map,
         neighbors_map=neighbor_map,
-        padding=[wave_sim.space_order],
+        padding=wave_sim.space_order,
         decomposition_type=:pencil,
     )
     return out
@@ -156,27 +156,6 @@ function _get_neighbor_map(domain_map, coord_limits)
 end
 
 
-
-function _check_inputs(
-    array, 
-    x_values, 
-    id:: Int,
-    id_max:: Int, 
-    overlap:: Int,
-    boundary_fill:: Symbol,
-)
-    # basic input checks
-    @assert id <= id_max "id must be less than or equal to id_max"
-    @assert id > 0 "id must be greater than 0"  
-    @assert id_max > 0 "id_max must be greater than 0"
-    @assert overlap >= 0 "overlap must be greater than or equal to 0"
-    @assert boundary_fill ∈ (:wraparound, :zero, :repeat) "Invalid fill method"
-    # check that the array and x_values are the same length
-    @assert size(array) == [len(x) for x in x_values] "array and x_values must be the same length"
-
-end
-
-
 """
     Get the length of the division, before padding
 """
@@ -188,30 +167,7 @@ function get_div_len(rank, size, coord_len)
     return div_len
 end
 
-using Debugger
-"""
-    Fill the array with closest values around padding.
-"""
-function fill_pad_array!(array, pad)
-    # first get corners
-    combs = [(1:pad + 1, x-(pad+1):x) for x in size(array)]
 
-    for inds in Iterators.product(combs...)
-        vals = array[inds...]
-        array[inds...] .= maximum(vals[isfinite.(vals)] )
-    end
-    # then get rows/columns
-    for i in pad:size(array)[1]-pad
-        array[i, 1:pad] .= array[i, pad + 1] 
-        array[i, end-pad:end] .= array[i, end - pad - 1]
-    end
-    for i in pad:size(array)[2]-pad
-        array[1:pad, i] .= array[pad + 1, i] 
-        array[end-pad:end, i] .= array[end - pad - 1, i]
-    end
-
-    return array
-end
 
 
 """
@@ -290,5 +246,40 @@ function get_local_simulation(
         global_index=global_index,
     )
     return out
+end
+
+
+"""
+    Get local sources and receivers in local (padded) coordinates.
+"""
+function get_local_sources(wave_sim::WaveSimulation, domain_map::DomainMap, rank::Int)
+
+    # function new_source(source, local_inds)
+    #     source_dict = Dict(key=>getfield(s, key) for key ∈ fieldnames(typeof(s)))
+
+
+    # end
+
+    coords = domain_map.local_coord_map[rank]
+    local_inds = domain_map.local_index_map[rank]
+    # get new sources
+    sources = [
+        x for x in wave_sim.sources if in_coords(x.location, coords)
+    ]
+    receivers = [x for x in wave_sim.receivers if in_coords(x.location, coords)]
+    return sources, receivers
+end
+
+
+"""
+    Snip out the local array and pad. 
+"""
+function get_padded_local_array(domain_map::DomainMap, array, rank)
+    inds_array = domain_map.local_index_map[rank]
+    inds = [x[1]:x[2] for x in eachrow(inds_array)]
+    pad_fill = fill(domain_map.padding, length(domain_map.global_coords))
+    unpadded = array[inds...]
+    out = padarray(unpadded, Pad(:replicate, pad_fill...))
+    
 end
     

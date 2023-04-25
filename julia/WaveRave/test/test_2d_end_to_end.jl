@@ -4,7 +4,6 @@ Tests for running the 2D simulation end to end.
 
 using Test
 using Debugger
-
 using WaveRave
 
 include("fixtures.jl")

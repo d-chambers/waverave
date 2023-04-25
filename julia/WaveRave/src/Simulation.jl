@@ -26,8 +26,7 @@ end
 
 Simply finds the closest point, but can't be far from the edge.
 """
-function get_inds(ar, local_grid)
-    coords = local_grid.coords
+function get_inds(ar, coords)
     out = [
         argmin(abs.(coord .- loc)) 
         for (coord, loc) in zip(coords, ar)
@@ -40,7 +39,8 @@ end
 """
 Exchange data between processes 
 """
-function update_ghost_regions(local_grid, rank, rank_count)
+function update_ghost_regions(array, domain_map, rank)
+    rank_count = length(domain_map.local_coord_map)
     if rank_count == 1  # only on process, do nothing
         return
     end
@@ -67,6 +67,13 @@ end
 
 
 """
+    Apply boundary conditions
+"""
+function apply_boundary(array, domain_map, rank, type=:reflective)
+end
+
+
+"""
     Run the simulation.
 # Arguments
 - wave_sim - Parameters of the simulation to run.
@@ -86,33 +93,37 @@ function run_wave_simulation(
     # basic setup
     time = collect(0:wave_sim.dt:wave_sim.time_max)
     setup_io(rank, output_directory)
-    domain_map = get_domain_map(wave_sim, rank, rank_count)
-    local_sim::LocalGrid = get_local_simulation(wave_sim, rank, rank_count)
+    domain_map::DomainMap = get_domain_map(wave_sim, rank_count)
+    # get padded p and update with values from other ranks
+    local_p = get_padded_local_array(domain_map, wave_sim.p_velocity, rank)
+    update_ghost_regions(local_p, domain_map, rank)
+    local_sources, local_receivers = get_local_sources(wave_sim, domain_map, rank) 
+    coords = domain_map.local_coord_map[rank]
     dt_sq = wave_sim.dt ^ 2
-    vel_sq = local_sim.p_velocity .^ 2
+    vel_sq = local_p .^ 2
     image = make_laplace_image(wave_sim)
     # initiliaze arrays for previous, current, and next time.
-    tp = zeros(size(local_sim.p_velocity))
-    tc = zeros(size(local_sim.p_velocity))
-    tn = zeros(size(local_sim.p_velocity))
+    tp = zeros(size(local_p))
+    tc = zeros(size(local_p))
     # get the index for the closest grid point to source.
-    source_inds_no_pad = [get_inds(x.location, local_sim) for x in local_sim.sources]
+    source_inds_no_pad = [get_inds(x.location, coords) for x in local_sources]
     source_inds = [x .+ wave_sim.space_order for x in source_inds_no_pad]
-    source_time_functions = [x(time) for x in local_sim.sources]
+    source_time_functions = [x(time) for x in local_sources]
     # time step
     for (t_ind, t) in enumerate(time)
-        update_ghost_regions(local_sim, rank, rank_count)
+        update_ghost_regions(tc, domain_map, rank)
         # save 
-        if t_ind % snapshot_interval == 0
-            save_wave()
+        if !isa(snapshot_interval, Nothing) && (t_ind % snapshot_interval == 0)
+            save_wave(tc)
         end
+        @bp
         # run simulation
         laplace = imfilter(tc, image) # , Inner())
         tn = @. vel_sq * laplace * dt_sq + 2 * tc - tp
         for (source_ind, stf) in zip(source_inds, source_time_functions)
             tn[source_ind...] .+= stf[t_ind] .* dt_sq 
         end
-        apply_boundary(tn, boundary_condition)
+        apply_boundary(tn, domain_map, rank, boundary_condition)
         # rotate time arrays
         tc, tp = tn, tc
     end
