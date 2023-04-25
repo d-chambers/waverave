@@ -112,3 +112,14 @@ function in_coords(location, coords)
     ]
     return all(in_coords)
 end
+
+
+
+"""
+    Replace an element of an array, return a copy.
+"""
+function replace_ind(array, index::Int, value)
+    out = copy(array)
+    out[index] = value
+    return out
+end

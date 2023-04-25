@@ -15,7 +15,7 @@ include("Utils.jl")
 export find_division_shape
 
 include("Decompose.jl")
-export get_local_simulation
+export get_domain_map
 
 include("Simulation.jl")
 export run_wave_simulation

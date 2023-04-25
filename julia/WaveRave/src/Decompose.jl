@@ -5,9 +5,50 @@ Functions for decomposing domains into subdomains.
 using Base
 using Combinatorics
 using ImageFiltering
+using Debugger
 
 include("Control.jl")
 include("Utils.jl")
+
+
+"""
+    A struct for keeping track of domain mappings.
+"""
+Base.@kwdef struct DomainMap
+    global_coords
+    global_inds
+    local_coord_map
+    local_index_map
+    local_coord_limit_map
+    domain_map
+    neighbors_map
+    padding
+    decomposition_type::Symbol
+end
+
+
+"""
+    Divide the domain into sub-domains based on the simualtion and rank count.
+
+    # Arguments
+    - `wave_sim:: WaveSimulation`: The simulation to decompose.
+    - `rank_count:: Int`: The number of ranks to decompose the domain into.
+    - `type:: Symbol`: The type of decomposition to use. Options are:
+        - :pencil: Decompose the domain into pencil subdomains.
+        - :grid: Decompose the domain into grid subdomains.
+        - :long: Only decompose along the long dimension. Only valid for 1 or
+            2D simulations.
+"""
+function get_domain_map(wave_sim::WaveSimulation, rank_count::Int, type:: Symbol=:pencil) :: DomainMap
+    wave_sim()  # validate wave simulation.
+    @assert type ∈ [:pencil]
+    @assert rank_count > 0
+    map = Dict(:pencil => pencil_decomposition)
+    func = map[type]
+    return func(wave_sim, rank_count)
+end
+
+
 
 
 """
@@ -38,6 +79,82 @@ function grid_decomposition(
     _check_inputs(array, x_values, id, id_max, overlap, boundary_fill)
     
 end
+
+function pencil_decomposition(wave_sim, rank_count)::DomainMap
+    domain_shape = size(wave_sim.p_velocity)
+    @assert length(domain_shape) <= 2  # only 1 or 2 d for now.
+    # decompose grid
+    long_dim = argmax(domain_shape)
+    long_size = domain_shape[long_dim]
+    dim_slice = fill(Colon(), long_dim)
+    glob_coords = wave_sim.coords
+    glob_inds = reduce(hcat, [[1, x] for x in domain_shape])'
+    # the divisions along the split axis
+    div_lens = [get_div_len(x, rank_count, long_size) for x in 0:1:rank_count-1]
+    interfaces = cat([0], cumsum(div_lens), dims=1)
+    # Create a dict of Dict(rank => dimension index limits)
+    index_map = Dict(x-1 => copy(glob_inds) for x in 1:rank_count)
+    for i in 1:length(div_lens)
+        index_map[i-1][long_dim, :] = [interfaces[i]+1, interfaces[i+1]]
+    end
+    # get the same thing, but for coordinate limits.
+    _coord_lims = [[minimum(x), maximum(x)] for x in wave_sim.coords]
+    coord_limits::Array{Float64} = reduce(hcat, _coord_lims)'
+    coord_limit_map = Dict(x-1 => copy(coord_limits) for x in 1:rank_count)
+    coords_map = Dict(x-1 => copy(glob_coords) for x in 1:rank_count)
+    for (rank, inds) in index_map
+        new_coords = [
+            coord[ind[1]: ind[2]]
+            for (coord, ind) in zip(glob_coords, eachrow(inds))
+        ]
+        new_limits = [[minimum(x), maximum(x)] for x in new_coords]
+        coord_limit_map[rank] = reduce(hcat, new_limits)'
+        coords_map[rank] = new_coords
+    end
+    shape = replace_ind(ones(Int, length(domain_shape)), long_dim, rank_count)
+    domain_map = reshape(collect(0:rank_count-1), shape...)
+    # get neighbor map
+    neighbor_map = _get_neighbor_map(domain_map, coord_limits)
+    out = DomainMap(
+        global_coords=glob_coords,
+        global_inds=glob_inds,
+        local_coord_map=coords_map,
+        local_index_map=index_map,
+        local_coord_limit_map=coord_limit_map,
+        domain_map=domain_map,
+        neighbors_map=neighbor_map,
+        padding=[wave_sim.space_order],
+        decomposition_type=:pencil,
+    )
+    return out
+end
+
+
+"""
+    Private function to get a dict of neighbor ranks along each dimension.
+"""
+function _get_neighbor_map(domain_map, coord_limits)
+    num_dims = size(coord_limits)[1]
+    dim_ones = ones(Int, num_dims)
+    dim_zeros = zeros(Int, num_dims)
+    filler:: AbstractArray{Union{Nothing, Int}} = fill(nothing, num_dims, 2)
+    out = Dict(a => copy(filler) for a in domain_map)
+    for index in CartesianIndices(size(domain_map))
+        rank = domain_map[index]
+        for dim_num in 1:num_dims
+            for (up_ind, mod) in zip([1,2], [-1, 1])
+                dind = CartesianIndex(replace_ind(dim_zeros, dim_num, mod)...)
+                neigh = index + dind
+                try
+                    out[rank][dim_num, up_ind] = domain_map[neigh]
+                catch e
+                end
+            end
+        end
+    end    
+    return out
+end
+
 
 
 function _check_inputs(
@@ -104,32 +221,32 @@ Returns both the new coords and the padded arrays.
 Decomposes over the largest dimension and fills the padded regions
 outside of the grid with the last grid value. Assumes 2D array
 """
-function pencil_decomposition(coords, array, pad, rank, rank_count)
-    @assert(pad >= 0, "pad must be greater than or equal to 0")
-    # get the largest dimension
-    @assert(length(coords) == 2, "only 2d for now.")
-    origin_index = [1:length(x) for x in coords]
-    dim = argmax(size(array))
-    out_coords = copy(coords)
-    div_coord = out_coords[dim]
-    cord_len = length(div_coord)
+# function pencil_decomposition(coords, array, pad, rank, rank_count)
+#     @assert(pad >= 0, "pad must be greater than or equal to 0")
+#     # get the largest dimension
+#     @assert(length(coords) == 2, "only 2d for now.")
+#     origin_index = [1:length(x) for x in coords]
+#     dim = argmax(size(array))
+#     out_coords = copy(coords)
+#     div_coord = out_coords[dim]
+#     cord_len = length(div_coord)
 
-    # get div lens    
-    div_lens = [get_div_len(x, rank_count, cord_len) for x in 0:1:rank_count-1]
-    interfaces = cat([1], cumsum(div_lens), dims=1)
-    start_ind, end_ind = interfaces[rank + 1], interfaces[rank + 2]
-    origin_index[dim] = start_ind:end_ind
-    # get start of division
-    out_coords[dim] = div_coord[start_ind: end_ind]
-    # init padded array and fill with values from original array
-    pad_arrays = [x.start + pad:pad + x.stop for x in origin_index]
-    padded_size = [length(x) for x in out_coords] .+ 2 * pad
-    out = padarray(array[origin_index...], Pad(:replicate,fill(pad, length(coords))...))
-    # last assignment ensures nothing was overwritten with sloppy edge padding.
-    # TODO: We need to make sure to update the values after padding with 
-    # correct values from adjacent local blocks.
-    return out_coords, out, origin_index
-end
+#     # get div lens    
+#     div_lens = [get_div_len(x, rank_count, cord_len) for x in 0:1:rank_count-1]
+#     interfaces = cat([1], cumsum(div_lens), dims=1)
+#     start_ind, end_ind = interfaces[rank + 1], interfaces[rank + 2]
+#     origin_index[dim] = start_ind:end_ind
+#     # get start of division
+#     out_coords[dim] = div_coord[start_ind: end_ind]
+#     # init padded array and fill with values from original array
+#     pad_arrays = [x.start + pad:pad + x.stop for x in origin_index]
+#     padded_size = [length(x) for x in out_coords] .+ 2 * pad
+#     out = padarray(array[origin_index...], Pad(:replicate,fill(pad, length(coords))...))
+#     # last assignment ensures nothing was overwritten with sloppy edge padding.
+#     # TODO: We need to make sure to update the values after padding with 
+#     # correct values from adjacent local blocks.
+#     return out_coords, out, origin_index
+# end
 
 
 

@@ -86,6 +86,7 @@ function run_wave_simulation(
     # basic setup
     time = collect(0:wave_sim.dt:wave_sim.time_max)
     setup_io(rank, output_directory)
+    domain_map = get_domain_map(wave_sim, rank, rank_count)
     local_sim::LocalGrid = get_local_simulation(wave_sim, rank, rank_count)
     dt_sq = wave_sim.dt ^ 2
     vel_sq = local_sim.p_velocity .^ 2
