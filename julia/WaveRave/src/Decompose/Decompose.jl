@@ -21,8 +21,9 @@ export DomainMap, get_domain_map, get_local_sources, get_padded_local_array
 Base.@kwdef struct DomainMap
     global_coords
     global_inds
-    local_coord_map
     local_index_map
+    local_shape_map
+    local_coord_map
     local_coord_limit_map
     domain_map
     neighbors_map
@@ -105,8 +106,14 @@ function pencil_decomposition(wave_sim, rank_count)::DomainMap
         _nids = [interfaces[i]+1, interfaces[i+1]]
         index_map[i-1][long_dim, :] = _nids
     end
+    
+    shape_map = Dict(
+        i => [x[2] - x[1] + 1 for x in eachrow(v)]
+        for (i, v) in index_map
+    )
+
     unpad_coord_map = Dict(
-        i => [x[1]:x[2] for x in eachrow(v .+ padding)]
+        i => [padding:x[2]-x[1]+padding for x in eachrow(v)]
         for (i, v) in index_map
     )
     # get the same thing, but for coordinate limits.
@@ -134,6 +141,7 @@ function pencil_decomposition(wave_sim, rank_count)::DomainMap
         global_inds=glob_inds,
         local_coord_map=coords_map,
         local_index_map=index_map,
+        local_shape_map=shape_map,
         local_coord_limit_map=coord_limit_map,
         domain_map=domain_map,
         neighbors_map=neighbor_map,
@@ -290,14 +298,14 @@ end
     Snip out the local array and pad. 
 """
 function get_padded_local_array(domain_map::DomainMap, array, rank)
+    number_dims = length(domain_map.global_coords)
     inds_array = domain_map.local_index_map[rank]
     inds = [x[1]:x[2] for x in eachrow(inds_array)]
-    pad_fill = fill(domain_map.padding, length(domain_map.global_coords))
+    pad_fill = fill(domain_map.padding, number_dims)
     unpadded = array[inds...]
     out = padarray(unpadded, Pad(:replicate, pad_fill...))
-    # this is an offset array, need to get regular array.
-    shape = inds_array[:, 2] .+ 2*pad_fill
-    return reshape(out, shape...)
+    # need to rehape to convert from offset array to normal array. 
+    return reshape(out, size(out)...)
 end
     
 end

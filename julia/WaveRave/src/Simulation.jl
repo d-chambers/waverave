@@ -50,7 +50,7 @@ function update_ghost_regions(array, domain_map, rank)
     if rank_count == 1  # only one process, do nothing
         return
     end
-    neighbors = domain_map[rank]
+    return
 end
 
 
@@ -121,11 +121,12 @@ function apply_boundary(array, domain_map::DomainMap, rank, type=:reflective)
     nmap = domain_map.neighbors_map[rank]
     ndim = length(domain_map.global_coords)
     inds = domain_map.local_index_map[rank]
+    loc_shape = domain_map.local_shape_map[rank]
     pad = domain_map.padding
 
     colons::AbstractArray{Any} = [Colon() for _ in 1:ndim]
     start_inds = [1:1+pad for _ in inds]
-    ind_max = [x[2] + pad: x[2] + 2*pad for x in eachrow(inds)]
+    ind_max = [x + pad: x + 2*pad for x in loc_shape]
     
     for (dim, row) in enumerate(eachrow(nmap))
         for (ind_range, val) in zip([start_inds, ind_max], row)
@@ -151,7 +152,7 @@ function init_output_wavefield(time, domain_map::DomainMap, rank, snapshot)
     potential_saves = collect(0:snapshot:(tmax ÷ snapshot)*snapshot)
     save_times = [time[searchsortedfirst(time, x)] for x in potential_saves]
     inds = domain_map.local_index_map[rank]
-    wave_inds = vcat([length(save_times)], [x[2] for x in eachrow(inds)])
+    wave_inds = vcat([length(save_times)], [x[2] - x[1] + 1 for x in eachrow(inds)])
     out = zeros(Float64, wave_inds...)
     return out, Set(save_times)
 end
