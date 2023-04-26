@@ -1,23 +1,16 @@
 """
 General control functions for WaveRave
 """
-
-
-
 module Control
 
 using Base
 using Statistics
 
-include("Sources.jl")
+
 include("Receivers.jl")
+include("Sources.jl")
 
-
-using .Sources
-using .Receivers
-
-
-export WaveSimulation, validate_simulation
+export WaveSimulation, validate_simulation, Receiver, ExplosiveRickerSource, AbstractSource
 
 
 """
@@ -174,19 +167,6 @@ function check_wavelength_resolution(simulation::WaveSimulation)
 end
 
 
-"""
-    Local control structure (each rank gets one!)
-
-See Docs on Simulation for descriptions.
-"""
-Base.@kwdef struct LocalGrid
-    coords::AbstractArray{AbstractArray}
-    p_velocity::AbstractArray
-    origin_inds::AbstractArray{StepRange}=[]
-    sources::Array{AbstractSource, 1}
-    receivers::Array{Receiver, 1} = []
-    global_index::AbstractArray = []
-end
 
 
 end

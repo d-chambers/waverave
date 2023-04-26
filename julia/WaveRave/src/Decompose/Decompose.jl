@@ -2,11 +2,6 @@
 Functions for decomposing domains into subdomains.
 """
 
-include("Control.jl")
-include("Utils.jl")
-
-
-
 module Decompose
 
 using Base
@@ -14,8 +9,8 @@ using Combinatorics
 using ImageFiltering
 using Debugger
 
-using .Control
-using .Utils
+import ..Control
+using ..Utils
 
 
 export DomainMap, get_domain_map, get_local_sources, get_padded_local_array
@@ -49,7 +44,7 @@ end
         - :long: Only decompose along the long dimension. Only valid for 1 or
             2D simulations.
 """
-function get_domain_map(wave_sim::WaveSimulation, rank_count::Int, type:: Symbol=:pencil) :: DomainMap
+function get_domain_map(wave_sim::Control.WaveSimulation, rank_count::Int, type:: Symbol=:pencil) :: DomainMap
     wave_sim()  # validate wave simulation.
     @assert type ∈ [:pencil]
     @assert rank_count > 0
@@ -228,51 +223,51 @@ outside of the grid with the last grid value. Assumes 2D array
 
 
 
-"""
-Get the local simulation for a given rank of specified size.
-"""
-function get_local_simulation(
-    global_simulation:: WaveSimulation,
-    rank:: Int,
-    rank_count:: Int,
-    decomposition:: Symbol = :pencil,
-    ) :: LocalGrid
-    if decomposition != :pencil
-        error("only pencil decomposition supported now.")
-    end
+# """
+# Get the local simulation for a given rank of specified size.
+# """
+# function get_local_simulation(
+#     global_simulation:: Control.WaveSimulation,
+#     rank:: Int,
+#     rank_count:: Int,
+#     decomposition:: Symbol = :pencil,
+#     ) :: LocalGrid
+#     if decomposition != :pencil
+#         error("only pencil decomposition supported now.")
+#     end
 
-    coords, vel, global_index = pencil_decomposition(
-        global_simulation.coords, 
-        global_simulation.p_velocity, 
-        global_simulation.space_order,
-        rank,
-        rank_count,
-    )
+#     coords, vel, global_index = pencil_decomposition(
+#         global_simulation.coords, 
+#         global_simulation.p_velocity, 
+#         global_simulation.space_order,
+#         rank,
+#         rank_count,
+#     )
 
-    sources = [
-        x for x in global_simulation.sources 
-        if in_coords(x.location, coords)
-    ]
-    receivers = [
-        x for x in global_simulation.receivers 
-        if in_coords(x.location, coords)
-    ]
+#     sources = [
+#         x for x in global_simulation.sources 
+#         if in_coords(x.location, coords)
+#     ]
+#     receivers = [
+#         x for x in global_simulation.receivers 
+#         if in_coords(x.location, coords)
+#     ]
 
-    out = LocalGrid(
-        coords=coords,
-        p_velocity=vel,
-        sources=sources,
-        receivers=receivers,
-        global_index=global_index,
-    )
-    return out
-end
+#     out = LocalGrid(
+#         coords=coords,
+#         p_velocity=vel,
+#         sources=sources,
+#         receivers=receivers,
+#         global_index=global_index,
+#     )
+#     return out
+# end
 
 
 """
     Get local sources and receivers in local (padded) coordinates.
 """
-function get_local_sources(wave_sim::WaveSimulation, domain_map::DomainMap, rank::Int)
+function get_local_sources(wave_sim::Control.WaveSimulation, domain_map::DomainMap, rank::Int)
 
     # function new_source(source, local_inds)
     #     source_dict = Dict(key=>getfield(s, key) for key ∈ fieldnames(typeof(s)))

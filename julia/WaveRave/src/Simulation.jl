@@ -3,17 +3,17 @@ Module for simulations.
 """
 module Simulation
 
+using ..Decompose
+using ..Control
+using ..Utils
 using MPI
 using Debugger
 using ImageFiltering
 import JLD2
 
-include("Control.jl")
-include("Utils.jl")
-include("Decompose.jl")
-using .Control
-using .Utils
-using .Decompose
+
+export run_wave_simulation
+
 
 """
 Ensure the output directory exists for all ranks.

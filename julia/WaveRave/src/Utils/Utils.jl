@@ -6,6 +6,11 @@ module Utils
 using Combinatorics
 using Memoization
 
+include("Stencil.jl")
+
+
+export get_stencil, get_stencil_coefs, make_homogeneous_model, chunk_grid, mkdir_if_not_exists
+export find_division_shape, in_coords, replace_ind
 
 
 """
