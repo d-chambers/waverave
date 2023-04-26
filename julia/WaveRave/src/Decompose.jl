@@ -2,15 +2,23 @@
 Functions for decomposing domains into subdomains.
 """
 
+include("Control.jl")
+include("Utils.jl")
+
+
+
+module Decompose
+
 using Base
 using Combinatorics
 using ImageFiltering
 using Debugger
 
-include("Control.jl")
-include("Utils.jl")
-
 using .Control
+using .Utils
+
+
+export DomainMap, get_domain_map, get_local_sources, get_padded_local_array
 
 """
     A struct for keeping track of domain mappings.
@@ -297,3 +305,4 @@ function get_padded_local_array(domain_map::DomainMap, array, rank)
     return reshape(out, shape...)
 end
     
+end

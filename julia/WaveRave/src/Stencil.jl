@@ -2,6 +2,8 @@
 Module for getting stencils of varius lengths
 """
 
+module Stencil
+
 export get_stencil, get_stencil_coefs
 
 """
@@ -28,4 +30,6 @@ end
 function get_stencil_coefs(order, derivative=2)
     dx = -order:1:order
     return get_stencil(dx, 0, derivative)
+end
+
 end

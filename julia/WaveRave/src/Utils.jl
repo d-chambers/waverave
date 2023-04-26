@@ -1,11 +1,10 @@
 """
 A module for various utilities.
 """
+module Utils
 
 using Combinatorics
 using Memoization
-
-export find_division_shape
 
 
 
@@ -134,4 +133,6 @@ function make_homogeneous_model(extents, dx, velocity)
     vel = convert(Float64, velocity)
     out = fill(vel, shape...)
     return out
+end
+
 end

@@ -1,6 +1,7 @@
 """
 Module for simulations.
 """
+module Simulation
 
 using MPI
 using Debugger
@@ -10,6 +11,9 @@ import JLD2
 include("Control.jl")
 include("Utils.jl")
 include("Decompose.jl")
+using .Control
+using .Utils
+using .Decompose
 
 """
 Ensure the output directory exists for all ranks.
@@ -222,4 +226,6 @@ function run_wave_simulation(
         JLD2.save_object(save_path, wave_sim)
     end
     return wave_sim
+end
+
 end

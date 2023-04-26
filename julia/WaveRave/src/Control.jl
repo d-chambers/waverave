@@ -2,16 +2,22 @@
 General control functions for WaveRave
 """
 
-using Base
-using Statistics
 
 
 module Control
 
-export WaveSimulation
+using Base
+using Statistics
 
 include("Sources.jl")
 include("Receivers.jl")
+
+
+using .Sources
+using .Receivers
+
+
+export WaveSimulation, validate_simulation
 
 
 """
@@ -54,10 +60,10 @@ end
 Base.@kwdef mutable struct WaveSimulation
     coords::AbstractArray{AbstractArray}
     p_velocity::AbstractArray
-    sources::Array{AbstractSource,1}
+    sources::AbstractArray
     time_max = 5
     # Optional parameters
-    receivers::Array{Receiver, 1} = []
+    receivers::AbstractArray = []
     cfl_limit::Real = 0.5
     nodes_per_wavelength::Int = 10
     distribution_strategy:: Symbol = :grid
