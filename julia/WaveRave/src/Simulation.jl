@@ -45,11 +45,37 @@ end
 """
     Exchange data between processes 
 """
-function update_ghost_regions(array, domain_map, rank)
+function update_ghost_regions(array, domain_map::DomainMap, rank)
     rank_count = length(domain_map.local_coord_map)
     if rank_count == 1  # only one process, do nothing
         return
     end
+    comm = MPI.COMM_WORLD
+    # need to do MPI exchanges here
+    pad = domain_map.padding
+    array_shape = size(array)
+    colons::AbstractArray{Any} = [Colon() for _ in 1:ndims(array)]
+    neighbors = domain_map.neighbors_map[rank]
+    requests:AbtractArray{MPI.Request} = []
+    for (dim, sub_rank_array) in eacrow(neighbors)
+        limits = [1, array_shape[dim]]
+        for (limit, new_rank, mod) in zip(limits, sub_rank_array, [-1, 1])
+            # start receive message
+            _rec_inds = sort([limit, limit + mod * pad])
+            rec_inds = replace_ind(colons, dim, _rec_inds[1]:rec_inds[2])
+            rec_view = @view array[rec_inds...]
+            ireq = MPI.Irec(rec_view, comm; source=new_rank, tag=new_rank + 32)
+            push!(requests, ireq)
+            # now send message
+            _send_inds = sort([limit, limit + mod * 2 * pad])
+            send_inds = replace_ind(colons, dim, _send_nds[1]:_send_inds[2])
+            send_data = @view argmax[send_inds...]
+            sreq = MPI.Isend(send_data, comm; dest=new_rank, tag=rank+32)
+            push!(requests, sreq)
+        end
+    end
+    stats = MPI.Waitall(requests)
+    MPI.Barrier(comm)
     return
 end
 
