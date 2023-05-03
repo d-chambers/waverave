@@ -110,11 +110,14 @@ end
 """
 function in_coords(location, coords)
     @assert length(location) == length(coords)
-    in_coords = [
-        (loc >= coor[1]) & (loc <= coor[end])
-        for (loc, coor) in zip(location, coords)
+    # Need to add 50% of dx to make sure sources on seams are included.
+    dxs = [(x[end] - x[1])/(length(x)-1) for x in coords]
+    lims = [[cor[1]-dx[1]/2, cor[end]+dx[end]/2] for (cor, dx) in zip(coords, dxs)]
+    in_it = [
+        (loc > lim[1]) && (loc <= lim[end])
+        for (loc, lim) in zip(location, lims)
     ]
-    return all(in_coords)
+    return all(in_it)
 end
 
 

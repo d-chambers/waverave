@@ -192,99 +192,12 @@ end
 
 
 
-
-"""
-    Decompose an array into n subdomains using pencil decomposition.
-
-Returns both the new coords and the padded arrays.
-Decomposes over the largest dimension and fills the padded regions
-outside of the grid with the last grid value. Assumes 2D array
-"""
-# function pencil_decomposition(coords, array, pad, rank, rank_count)
-#     @assert(pad >= 0, "pad must be greater than or equal to 0")
-#     # get the largest dimension
-#     @assert(length(coords) == 2, "only 2d for now.")
-#     origin_index = [1:length(x) for x in coords]
-#     dim = argmax(size(array))
-#     out_coords = copy(coords)
-#     div_coord = out_coords[dim]
-#     cord_len = length(div_coord)
-
-#     # get div lens    
-#     div_lens = [get_div_len(x, rank_count, cord_len) for x in 0:1:rank_count-1]
-#     interfaces = cat([1], cumsum(div_lens), dims=1)
-#     start_ind, end_ind = interfaces[rank + 1], interfaces[rank + 2]
-#     origin_index[dim] = start_ind:end_ind
-#     # get start of division
-#     out_coords[dim] = div_coord[start_ind: end_ind]
-#     # init padded array and fill with values from original array
-#     pad_arrays = [x.start + pad:pad + x.stop for x in origin_index]
-#     padded_size = [length(x) for x in out_coords] .+ 2 * pad
-#     out = padarray(array[origin_index...], Pad(:replicate,fill(pad, length(coords))...))
-#     # last assignment ensures nothing was overwritten with sloppy edge padding.
-#     # TODO: We need to make sure to update the values after padding with 
-#     # correct values from adjacent local blocks.
-#     return out_coords, out, origin_index
-# end
-
-
-
-
-
-# """
-# Get the local simulation for a given rank of specified size.
-# """
-# function get_local_simulation(
-#     global_simulation:: Control.WaveSimulation,
-#     rank:: Int,
-#     rank_count:: Int,
-#     decomposition:: Symbol = :pencil,
-#     ) :: LocalGrid
-#     if decomposition != :pencil
-#         error("only pencil decomposition supported now.")
-#     end
-
-#     coords, vel, global_index = pencil_decomposition(
-#         global_simulation.coords, 
-#         global_simulation.p_velocity, 
-#         global_simulation.space_order,
-#         rank,
-#         rank_count,
-#     )
-
-#     sources = [
-#         x for x in global_simulation.sources 
-#         if in_coords(x.location, coords)
-#     ]
-#     receivers = [
-#         x for x in global_simulation.receivers 
-#         if in_coords(x.location, coords)
-#     ]
-
-#     out = LocalGrid(
-#         coords=coords,
-#         p_velocity=vel,
-#         sources=sources,
-#         receivers=receivers,
-#         global_index=global_index,
-#     )
-#     return out
-# end
-
-
 """
     Get local sources and receivers in local (padded) coordinates.
 """
 function get_local_sources(wave_sim::Control.WaveSimulation, domain_map::DomainMap, rank::Int)
-
-    # function new_source(source, local_inds)
-    #     source_dict = Dict(key=>getfield(s, key) for key ∈ fieldnames(typeof(s)))
-
-
-    # end
-
     coords = domain_map.local_coord_map[rank]
-    local_inds = domain_map.local_index_map[rank]
+    # local_inds = domain_map.local_index_map[rank]
     # get new sources
     sources = [
         x for x in wave_sim.sources if in_coords(x.location, coords)

@@ -87,8 +87,9 @@ function main()
     )
     sim()  # validate simulation params
     # delete old file if it exists
-    if isfile(save_path)
+    try
         rm(save_path)
+    catch
     end
 
     # println("running simulation (or warming up if profiling)")

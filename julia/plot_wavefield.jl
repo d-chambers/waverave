@@ -50,4 +50,4 @@ function main()
     
 end
 
-@enter main()
+main()

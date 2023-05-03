@@ -69,7 +69,7 @@ function update_ghost_regions(array, domain_map::DomainMap, rank)
                 _send_inds = [1+pad, 2*pad]
             else  # on right or top side
                 _rec_inds = [limit - pad + 1, limit]
-                _send_inds = [limit - 2*pad, limit - pad - 1]
+                _send_inds = [limit - 2*pad + 1, limit - pad]
             end
             # start receive message
             rec_inds = replace_ind(colons, dim, _rec_inds[1]:_rec_inds[2])
@@ -83,7 +83,6 @@ function update_ghost_regions(array, domain_map::DomainMap, rank)
             push!(requests, sreq)
         end
     end
-    # println("Rank: $rank waiting in update ghost regions")
     stats = MPI.Waitall(requests)
     MPI.Barrier(comm)
     return
@@ -119,8 +118,6 @@ function get_global_wavefield(wave_field, domain_map::DomainMap, rank)
             recv_mesg = @view out[linds...]
             push!(requests, MPI.Irecv!(recv_mesg, comm; source=r, tag=r+32))
         end
-        println("type of out in rank 0: $(typeof(out))")
-        # wait for all messages to be received by rank 0
     end
     MPI.Waitall(requests)
     MPI.Barrier(comm)
@@ -254,7 +251,6 @@ function run_wave_simulation(
         tn = @. vel_sq * laplace * dt_sq + 2 * tc - tp
         # add source contributions
         for (source_ind, stf) in zip(source_inds, source_time_functions)
-            println("injecting source at $(t) in $(source_ind)")
             tn[source_ind...] += (stf[t_ind] * dt_sq) 
         end
         apply_boundary(tn, domain_map, rank, boundary_condition)
@@ -264,7 +260,6 @@ function run_wave_simulation(
     # get global wavefield and update output.
     global_wavefield = get_global_wavefield(wavefield, domain_map, rank)
     if rank == 0
-        println("type of global wavefield: $(typeof(global_wavefield))")
         wave_sim.wavefield = global_wavefield
         wave_sim.time_vector = sort(collect(save_times))
         if !isnothing(save_path)

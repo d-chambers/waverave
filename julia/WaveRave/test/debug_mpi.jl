@@ -13,6 +13,7 @@ function main()
     source_delay = 0.1
     save_interval = 0.1
     sim_time = 0.5
+    space_order=4
 
 
 
@@ -30,15 +31,16 @@ function main()
         p_velocity=velmod,
         sources=[source],
         time_max=sim_time,
+        space_order=space_order,
     )
     sim()  # validate simulation params
 
-    run_wave_simulation(
+    @enter run_wave_simulation(
         sim; 
         snapshot_interval=save_interval,
-        _fake_rank = 0,
-        _fake_rank_count = 2,
+        _fake_rank = 1,
+        _fake_rank_count = 4,
     )
 end
 
-@enter main()
+main()
