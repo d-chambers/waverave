@@ -33,7 +33,7 @@ outputs/
 
 # --- python ignores
 #general output files
-output/
+output/*
 
 
 # Byte-compiled / optimized / DLL files
