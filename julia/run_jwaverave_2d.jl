@@ -22,6 +22,9 @@ function parse_commandline()
         "--velocity"
             help = "The velocity for a homogeneous model (m/s)"
             default = 3000
+        "--order"
+            help = "The order of the spatial derivative"
+            default = 4        
         "--out_path"
             help = "where to save results."
             default = "outputs/results.hdf5"
@@ -63,6 +66,7 @@ function main()
     save_path = parsed_args["out_path"]
     profile = convert(Bool, parsed_args["profile"])
     num_runs = convert(Int, parsed_args["runs"])
+    space_order = convert(Int, parsed_args["order"])
     # init velocity model
 
     velmod = make_homogeneous_model(extents , dx, vel)
@@ -79,6 +83,7 @@ function main()
         p_velocity=velmod,
         sources=[source],
         time_max=sim_time,
+        space_order=space_order,
     )
     sim()  # validate simulation params
     # delete old file if it exists

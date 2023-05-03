@@ -63,7 +63,6 @@ function update_ghost_regions(array, domain_map::DomainMap, rank)
             if isnothing(new_rank)
                 continue
             end
-            @bp
             # get send/receive indicies
             if limit == 1  # we are on the left (or bottom) side
                 _rec_inds = [1, pad]
@@ -79,11 +78,12 @@ function update_ghost_regions(array, domain_map::DomainMap, rank)
             push!(requests, ireq)
             # now send message
             send_inds = replace_ind(colons, dim, _send_inds[1]:_send_inds[2])
-            send_data = @view argmax[send_inds...]
+            send_data = @view array[send_inds...]
             sreq = MPI.Isend(send_data, comm; dest=new_rank, tag=rank+32)
             push!(requests, sreq)
         end
     end
+    # println("Rank: $rank waiting in update ghost regions")
     stats = MPI.Waitall(requests)
     MPI.Barrier(comm)
     return
@@ -98,33 +98,33 @@ function get_global_wavefield(wave_field, domain_map::DomainMap, rank)
     rank_count = length(domain_map.local_coord_map)
     ranks = collect(0:(rank_count -1))
     comm = MPI.COMM_WORLD
+    out = wave_field
     # Fast exit ramp for single process
     if rank_count == 1  
-        return wave_field
+        return out
     end
-    
+    # send current data to rank 0
     requests::AbstractArray{MPI.Request} = []
+    push!(requests, MPI.Isend(wave_field, comm; dest=0, tag=rank+32))
+    # collect all data on rank 0
     if rank == 0
-        rec_dict:: Dict{Int=>AbstractArray} = Dict()
-        glob_inds = [x[1] for x in domain_map.global_inds]
-        glob_size = vcat(size(wave_feild)[1:1], glob_inds)
+        glob_inds = [x[2] for x in eachrow(domain_map.global_inds)]
+        glob_size = vcat(size(wave_field)[1], glob_inds)
         out = zeros(Float64, glob_size...)
         for r in ranks
-            recv_mesg = Array{Float64}(undef, ndims(out))
+            # get index to map received data back to global coords
+            linds = [
+                Colon(), [x[1]:x[2] for x in eachrow(domain_map.local_index_map[r])]...
+            ]
+            recv_mesg = @view out[linds...]
             push!(requests, MPI.Irecv!(recv_mesg, comm; source=r, tag=r+32))
-            rec_dict[r] = recv_mesg
         end
+        println("type of out in rank 0: $(typeof(out))")
         # wait for all messages to be received by rank 0
-        MPI.Waitall(requests)
-        for (r, data) in rec_dict
-            inds = domain_map.local_index_map[r]
-            out[inds...] = data
-        end
-        return out
-    else
-        push!(requests, MPI.Isend(wave_field, comm; dest=0, tag=rank+32))
-        return []
     end
+    MPI.Waitall(requests)
+    MPI.Barrier(comm)
+    return out
 end
 
 
@@ -254,6 +254,7 @@ function run_wave_simulation(
         tn = @. vel_sq * laplace * dt_sq + 2 * tc - tp
         # add source contributions
         for (source_ind, stf) in zip(source_inds, source_time_functions)
+            println("injecting source at $(t) in $(source_ind)")
             tn[source_ind...] += (stf[t_ind] * dt_sq) 
         end
         apply_boundary(tn, domain_map, rank, boundary_condition)
@@ -262,10 +263,13 @@ function run_wave_simulation(
     end
     # get global wavefield and update output.
     global_wavefield = get_global_wavefield(wavefield, domain_map, rank)
-    wave_sim.wavefield = global_wavefield
-    wave_sim.time_vector = sort(collect(save_times))
-    if rank == 0 && !isnothing(save_path)
-        JLD2.save_object(save_path, wave_sim)
+    if rank == 0
+        println("type of global wavefield: $(typeof(global_wavefield))")
+        wave_sim.wavefield = global_wavefield
+        wave_sim.time_vector = sort(collect(save_times))
+        if !isnothing(save_path)
+            JLD2.save_object(save_path, wave_sim)
+        end
     end
     return wave_sim
 end

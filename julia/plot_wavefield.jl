@@ -4,7 +4,7 @@ Script to make a plot of the output wavefields
 
 using WaveRave
 using JLD2
-# using Debugger
+using Debugger
 using Printf
 using Plots
 
@@ -50,4 +50,4 @@ function main()
     
 end
 
-main()
+@enter main()

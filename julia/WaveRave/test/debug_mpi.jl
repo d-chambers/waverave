@@ -36,7 +36,7 @@ function main()
     run_wave_simulation(
         sim; 
         snapshot_interval=save_interval,
-        _fake_rank = 1,
+        _fake_rank = 0,
         _fake_rank_count = 2,
     )
 end
