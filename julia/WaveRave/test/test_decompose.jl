@@ -35,11 +35,24 @@ end
 
 
 @testset "2D grid_decomposition" begin
-    # Test 2D decomposition.
-    control = get_2d_test_control()
-    dm = get_domain_map(control, 4)
-    # there should be two domains
-    @test length(dm.local_coord_map) == 4
-    @test length(dm.local_index_map) == 4
-    @test length(dm.local_coord_limit_map) == 4
+    @testset "4 divisions" begin
+        # Test 2D decomposition.
+        control = get_2d_test_control()
+        dm = get_domain_map(control, 4)
+        # there should be two domains
+        @test length(dm.local_coord_map) == 4
+        @test length(dm.local_index_map) == 4
+        @test length(dm.local_coord_limit_map) == 4
+    end
+    @testset "2 divisions" begin
+        # Test 2D decomposition.
+        control = get_2d_test_control()
+        @enter get_domain_map(control, 2)
+        dm = get_domain_map(control, 2)
+        # there should be two domains
+        @test length(dm.local_coord_map) == 4
+        @test length(dm.local_index_map) == 4
+        @test length(dm.local_coord_limit_map) == 4
+    end
+
 end

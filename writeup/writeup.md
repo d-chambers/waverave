@@ -44,3 +44,34 @@ For simplicity we simply use fixed (reflecting) boundary conditions.
 
 
 
+# Julia
+
+## Overview and setup
+
+The Julia version of the code is found in the julia folder. To use it in a new account on Mio, the `setup_environment.sh` script needs to be run. This will take a few minutes as it creates a new conda environment with julia installed, then uses julia to instantiate the WaveRave package. Here are some other important files:
+
+
+`run_jwaverave.jl` - Julia script to run the simulation. Accepts a variety of command line arguments for controlling the simulation. 
+
+`plot_wavefield.jl` - Plots the wavefield (creates a series of pngs at snapshots.)
+
+`submit_weak.sh` - Slurm submission script to get the timing for weak scaling test. Also shows how to run jwaverave with MPI.
+
+`submit_strong.sh` - Slurm submission script to get the timing for strong scaling test
+
+
+
+## Testing
+There are approximately 30 tests which can be run using the `run_tests.sh` script. These include some simple unit tests as well as a few end2end tests. One test ensures the serial version of the code outputs the same results and the MPI version.
+
+The following gif shows the output of the default serial simulation which uses a homogeneous velocity model.
+
+![](images/julia/animation.gif)
+
+The simulation appears healthy; there is no obvious numerical dispersion and the expected polarity reversals associated with the boundary reflection occur. Since one of the tests compares the output of the MPI version with the serial version we are confident both are accurate.
+
+
+## Timing
+
+
+

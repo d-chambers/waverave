@@ -19,7 +19,7 @@ export run_wave_simulation
 Ensure the output directory exists for all ranks.
 """
 function setup_io(rank, save_path)
-    if rank == 0
+    if rank == 0 && !isnothing(save_path)
         path = isdir(save_path) ? save_path : dirname(save_path)
         mkdir_if_not_exists(path)
     end
@@ -56,19 +56,29 @@ function update_ghost_regions(array, domain_map::DomainMap, rank)
     array_shape = size(array)
     colons::AbstractArray{Any} = [Colon() for _ in 1:ndims(array)]
     neighbors = domain_map.neighbors_map[rank]
-    requests:AbtractArray{MPI.Request} = []
-    for (dim, sub_rank_array) in eacrow(neighbors)
+    requests::AbstractArray{MPI.Request} = []
+    for (dim, sub_rank_array) in enumerate(eachrow(neighbors))
         limits = [1, array_shape[dim]]
-        for (limit, new_rank, mod) in zip(limits, sub_rank_array, [-1, 1])
+        for (limit, new_rank) in zip(limits, sub_rank_array)
+            if isnothing(new_rank)
+                continue
+            end
+            @bp
+            # get send/receive indicies
+            if limit == 1  # we are on the left (or bottom) side
+                _rec_inds = [1, pad]
+                _send_inds = [1+pad, 2*pad]
+            else  # on right or top side
+                _rec_inds = [limit - pad + 1, limit]
+                _send_inds = [limit - 2*pad, limit - pad - 1]
+            end
             # start receive message
-            _rec_inds = sort([limit, limit + mod * pad])
-            rec_inds = replace_ind(colons, dim, _rec_inds[1]:rec_inds[2])
+            rec_inds = replace_ind(colons, dim, _rec_inds[1]:_rec_inds[2])
             rec_view = @view array[rec_inds...]
-            ireq = MPI.Irec(rec_view, comm; source=new_rank, tag=new_rank + 32)
+            ireq = MPI.Irecv!(rec_view, comm; source=new_rank, tag=new_rank + 32)
             push!(requests, ireq)
             # now send message
-            _send_inds = sort([limit, limit + mod * 2 * pad])
-            send_inds = replace_ind(colons, dim, _send_nds[1]:_send_inds[2])
+            send_inds = replace_ind(colons, dim, _send_inds[1]:_send_inds[2])
             send_data = @view argmax[send_inds...]
             sreq = MPI.Isend(send_data, comm; dest=new_rank, tag=rank+32)
             push!(requests, sreq)
@@ -188,19 +198,24 @@ end
     Run the simulation.
 # Arguments
 - wave_sim - Parameters of the simulation to run.
+- boundary_conditions - Specify the BCs of the simulation (only reflective supported now)
 - snapshot_interval - The interval at which to save snapshots of the simulation (in seconds)
-- output_directory - The directory to save the snapshots to.
+- save_path - The path to save results.
+- _fake_rank - a debugging parameter to fake the rank (to debug MPI logic in serial mode)
+- _fake_rank_count - also an MPI debugging parameter.
 """
 function run_wave_simulation(
     wave_sim:: WaveSimulation; 
     boundary_condition:: Symbol = :reflective,
     snapshot_interval::Float64 = 1.0,
-    save_path:: String = "outputs/wavesim.hdf5",
+    save_path:: Union{String, Nothing} = nothing,
+    _fake_rank = nothing,
+    _fake_rank_count = nothing,
     ) :: WaveSimulation
     # MPI setup
     MPI.Init()
-    rank = MPI.Comm_rank(MPI.COMM_WORLD)
-    rank_count = MPI.Comm_size(MPI.COMM_WORLD)
+    rank = isnothing(_fake_rank) ? MPI.Comm_rank(MPI.COMM_WORLD) : _fake_rank
+    rank_count = isnothing(_fake_rank_count) ? MPI.Comm_size(MPI.COMM_WORLD) : _fake_rank_count
     # basic setup
     time = collect(0:wave_sim.dt:wave_sim.time_max)
     setup_io(rank, save_path)
@@ -249,7 +264,7 @@ function run_wave_simulation(
     global_wavefield = get_global_wavefield(wavefield, domain_map, rank)
     wave_sim.wavefield = global_wavefield
     wave_sim.time_vector = sort(collect(save_times))
-    if rank == 0
+    if rank == 0 && !isnothing(save_path)
         JLD2.save_object(save_path, wave_sim)
     end
     return wave_sim

@@ -31,12 +31,11 @@ end
 
 
 @testset "2d end2end mpi" begin
-    # global_sim = get_2d_test_control()()
-    # path = "outputs/2d_2proc.hdf5"
-    # n = 2  # number of processes
-    # mpiexec() do exe  # MPI wrapper
-    #     run(`$exe -n $n $(Base.julia_cmd()) run_jwaverave.jl --out_path=$path`)
-    # end
+    path = "outputs/2d_2proc.hdf5"
+    n = 2  # number of processes
+    mpiexec() do exe  # MPI wrapper
+        run(`$exe -n $n julia --project="." run_jwaverave.jl --out_path=$path`)
+    end
 
 end
 
