@@ -7,4 +7,4 @@ conda env create -n julia -c conda-forge -y
 
 # activate julia environment and install all needed julia packages
 conda activate julia
-julia -e 'using Pkg; Pkg.activate("WaveRave"); Pkg.instantiate("WaveRave")'
+julia -e 'using Pkg; Pkg.activate("WaveRave"); Pkg.instantiate("WaveRave"); Pkg.resolve()'

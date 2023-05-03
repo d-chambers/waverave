@@ -3,7 +3,6 @@ Tests for decomposing domains.
 """
 
 using Test
-using Debugger
 using WaveRave
 
 include("fixtures.jl")
@@ -47,12 +46,12 @@ end
     @testset "2 divisions" begin
         # Test 2D decomposition.
         control = get_2d_test_control()
-        @enter get_domain_map(control, 2)
+        get_domain_map(control, 2)
         dm = get_domain_map(control, 2)
         # there should be two domains
-        @test length(dm.local_coord_map) == 4
-        @test length(dm.local_index_map) == 4
-        @test length(dm.local_coord_limit_map) == 4
+        @test length(dm.local_coord_map) == 2
+        @test length(dm.local_index_map) == 2
+        @test length(dm.local_coord_limit_map) == 2
     end
 
 end

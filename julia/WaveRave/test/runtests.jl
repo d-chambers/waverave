@@ -1,6 +1,11 @@
 using WaveRave
 using Test
 
+# These must come first
+@testset "2D E2@" begin
+    include("test_2d_end_to_end.jl")
+end
+
 @testset "stencil" begin
     include("test_stencil.jl")
 end
@@ -22,6 +27,3 @@ end
     include("test_sources.jl")
 end
 
-@testset "2D E2@" begin
-    include("test_2d_end_to_end.jl")
-end

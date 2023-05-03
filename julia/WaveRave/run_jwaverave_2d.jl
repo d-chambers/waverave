@@ -25,9 +25,9 @@ function parse_commandline()
         "--order"
             help = "The order of the spatial derivative"
             default = 4        
-        "--out_path"
+        "--savepath"
             help = "where to save results."
-            default = "outputs/results.hdf5"
+            default = nothing
         "--source_frequency"
             help = "frequency of Ricker wavelet in Hz"
             default = 60.0
@@ -45,7 +45,7 @@ function parse_commandline()
             action = :store_true
         "--runs"
             help = "total number of runs for averaging times"
-            default = 4
+            default = 10
     end
 
     return parse_args(s)
@@ -56,14 +56,15 @@ end
 function main()
     parsed_args = parse_commandline()
     # ensure expected datatypes from each command line argument
-    extents = [convert(Float64, x) for x in parsed_args["extents"]]
+    exs = parsed_args["extents"]
+    extents = isa(exs, String) ? [parse(Float64, x) for x in split(exs, (' ', ','))] : exs
     dx = convert(Float64, parsed_args["dx"])
     vel = convert(Float64, parsed_args["velocity"])
     source_freq = convert(Float64, parsed_args["source_frequency"])
     source_delay = convert(Float64, parsed_args["source_delay"])
     save_interval = convert(Float64, parsed_args["save_interval"])
     sim_time = convert(Float64, parsed_args["simulation_time"])
-    save_path = parsed_args["out_path"]
+    savepath = parsed_args["savepath"]
     profile = convert(Bool, parsed_args["profile"])
     num_runs = convert(Int, parsed_args["runs"])
     space_order = convert(Int, parsed_args["order"])
@@ -88,19 +89,19 @@ function main()
     sim()  # validate simulation params
     # delete old file if it exists
     try
-        rm(save_path)
+        rm(savepath)
     catch
     end
 
     # println("running simulation (or warming up if profiling)")
-    run_wave_simulation(
+    (_, rank, rank_count) = run_wave_simulation(
         sim; 
         snapshot_interval=save_interval,
-        save_path=parsed_args["out_path"],
+        save_path=parsed_args["savepath"],
     )
     # bail out if we aren't profiling here.
     if !profile 
-        return 
+        return 0
     end
     start = time()
     for _ in 1:num_runs
@@ -109,9 +110,19 @@ function main()
             snapshot_interval=save_interval,
         )
     end
-    endtime = time() - start
-    average_time = @sprintf("%.03f", endtime / num_runs)
-    println("Ran $num_runs simulations, average time=$average_time seconds")
+    if rank == 0
+        endtime = time() - start
+        average_time = @sprintf("%.03f", endtime / num_runs)
+        time_steps = Int(round(sim.time_max / sim.dt))
+        msg = (
+            "Used $(rank_count) node(s) to run $num_runs simulations \
+             each with $(time_steps) time steps \
+            on a grid size of: $(size(sim.p_velocity)) \
+            average time=$average_time seconds"
+        )
+        println(msg)
+    end
+    return 0
 end
 
 main()

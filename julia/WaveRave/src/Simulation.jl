@@ -208,7 +208,7 @@ function run_wave_simulation(
     save_path:: Union{String, Nothing} = nothing,
     _fake_rank = nothing,
     _fake_rank_count = nothing,
-    ) :: WaveSimulation
+    )
     # MPI setup
     MPI.Init()
     rank = isnothing(_fake_rank) ? MPI.Comm_rank(MPI.COMM_WORLD) : _fake_rank
@@ -266,7 +266,7 @@ function run_wave_simulation(
             JLD2.save_object(save_path, wave_sim)
         end
     end
-    return wave_sim
+    return wave_sim, rank, rank_count
 end
 
 end

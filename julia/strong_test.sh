@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH -N 3 
-#SBATCH --ntasks-per-node=4
-#SBATCH -t 00:01:00
+#SBATCH -N 12
+#SBATCH -t 00:50:00
+#SBATCH -j JWaveRaveStrong
 
 # Record the node that we ran on
 echo "Job ran on: $SLURM_NODELIST"
@@ -14,4 +14,6 @@ module load apps/python3/2022.10
 conda activate julia
 
 # Run julia script
-mpiexec -n 4 julia mpi_test.jl
+for n in {1..12} do
+    mpiexec -n n julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=1200,2000
+done
