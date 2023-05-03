@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -N 12
 #SBATCH -t 00:50:00
-#SBATCH -j JWaveRaveStrong
+#SBATCH -J JWaveRaveStrong
 
 # Record the node that we ran on
 echo "Job ran on: $SLURM_NODELIST"
