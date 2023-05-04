@@ -8,17 +8,46 @@ Derrick Chambers, Peiyao Li, and Ayon Ghosh
 
 
 
-# Introduction
+> 1. (5%) Describe the serial algorithm that you are parallelizing. What problem is it aiming to address? Describe the algorithm with specific sentences or pseudocode. How many operations does the serial algorithm for a particular problem size?
 
-Finite difference methods are a class of numerical methods for solving partial differential equations (PDEs). They are used in a wide variety of applications, including fluid dynamics, heat transfer, and electromagnetism. In this project, we used the finite difference method for solving the wave equation, which is a PDE that describes the propagation of waves. We developed three implementations in different programming languages (C, python, and Julia) all of which used MPI to parallelize the simulations. The following details the domain, implementation tests, and scaling tests.
+Finite difference methods are a class of numerical methods for solving partial differential equations (PDEs). They are used in a wide variety of applications, including fluid dynamics, heat transfer, and electromagnetism. In this project, we used the finite difference method for solving the acoustic wave equation, which is a PDE that describes the propagation of waves in a fluid media (although it is also often "good enough" for some elastic problems). We developed three implementations in different programming languages (C, Python, and Julia) all of which use MPI to parallelize the simulations. The following details the domain, implementation tests, and scaling tests.
 
 The acoustic wave equation is given as:
 
 $$
-\partial_t^2 p = c^2 \Delta p + s
+\frac{1}{c^2}\partial_t^2 p = \Delta p + s
 $$
 
 Where $p$ is the pressure, $c$ is the velocity, $\Delta$ is the Laplacian operator, and $s$ is the source. 
+
+Applying a simple centered first order approximation, this can be written as
+
+$$
+\frac{t^{n-1}_{i,j} - 2t^n_{i,j} + t^{n+1}_{i,j}}{dt^2}  = 
+c^2 (\frac{t^n_{i-1,j} -2t^n_{i,j} + t^n_{i+1,j}}{dx^2} +
+ \frac{t^n_{i1,j-1} -2t^n_{i,j} + t^n_{i,j+1}}{dy^2} ) + c^2s
+$$
+
+where n, i, and j indices represent time, x, and y increments respectively.
+
+The equation can then be rearranged to solve for the next time ($t^{n+1}_{i,j}$) based on the previous times. 
+
+$$
+t^{n+1}_{i,j}  = 
+c^2 dt^2 (\frac{t^n_{i-1,j} -2t^n_{i,j} + t^n_{i+1,j}}{dx^2} +
+ \frac{t^n_{i1,j-1} -2t^n_{i,j} + t^n_{i,j+1}}{dy^2} ) + c^2 dt^2 s - t^{n-1}_{i,j} + 2t^n_{i,j} 
+$$
+
+This defines the basic time stepping algorithm; for each time step the Laplacian is implemented as a convolution filter then multiplied by the ($c^2 dt^2$) and the wavefield at two previous timesteps is subtracted and two times the previous wavefield added. The source times $c^2dt^2$ is injected at specified times and locations. In practice, however, a higher order approximation is usually used for the Laplacian operator. In this project we used a 4th order central difference resulting in a stencil with the length of 9. 
+
+The number of operations depends on the grid size, and is largely dominated by the Laplacian operator. Let $L$ be one minus the length of the centered Laplacian operator divided by two (4 in our case). Then, assuming a grid padded $l$ zeros (with dimensions $X$ by $Y$ before padding) the total number of operations related to the Laplacian is $2LXY$. This has to be calculated every time step, of a total number of timesteps $T_s$. There are also some other operations associated with adding the previous time steps and multiplying velocities, but to a first order approximation there will be $2lXYT_s$ operations. If a square Laplacian stencil is used this becomes $l^2XYT_s$. 
+
+
+> 2. (10%) Using detailed sentences or pseudocode, how are you breaking up this algorithm using a distributed memory (MPI) model? Why is this algorithm not embarrassingly parallel? Describe the initial distribution of the data/model, and what data need to be transferred between processes throughout. If it is helpful to introduce new notation, please do so, but be sure to define each index/variable specifically defined at its first use. You may include diagrams as needed. 
+
+We are decomposing the 2D domain in vertical strips along the long dimension of the model. So, for a grid size of (X=300 Y=600) and using two nodes, each node would have a s subdomain of (300, 300), or, accounting for padding (300 + $l$, 300 + $l$).
+ After each time step, $Xl$ points need to be transferred between the sub-domain borders (known as ghost regions).  
+
 
 # Simulation Parameters
 
