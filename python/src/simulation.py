@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 class simul_par(object):
    def __init__(self, nx, ny, dx, dy, comm, rank, size):
        """
@@ -53,10 +54,11 @@ class simul_par(object):
 
       isx = int(sx / self.dx)
       isy = int(sy / self.dy)
-
       if (isx-self.start) < self.chunk_size and (isx-self.start)>=0:
         rank_source = self.rank
         isx = isx-self.start
+        print("isx="+str(isx))
+        print(self.chunk_size)
         isy = isy
         return rank_source, isx, isy
       else: 

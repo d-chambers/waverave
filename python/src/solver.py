@@ -26,7 +26,7 @@ class Ricker(object):
       
    def source_time(self):
           F=np.zeros(self.nt)
-          t=np.linspace(0, self.dt*self.nt, self.dt)
+          t=np.arange(0, self.dt*self.nt, self.dt)
           F = (1-((t*self.dt - self.t0)/self.ss)**2)*np.exp(-(t*self.dt - self.t0)**2/(2*self.ss**2))
           return F
       
@@ -73,62 +73,61 @@ class wavefield(object):
    #         raise IndexError("Rerun Mesher: Velocity Grid of rank "+str(self.rank)+ " has different dimensions from expected")
       
    def inject_source(self, isx, isy, f, dt):
-      self.new[isx, isy] += f*dt*dt
+      self.new[self.pad+isx, isy] += f*dt*dt
+      
 
       
 
    def set_boundaries(self):
        if self.rank == 0:
          self.old[self.pad:2*self.pad, :] = 0
-       if self.rank == 1:
-         self.old[-2*self.pad:self.pad,:] = 0
-       self.old[:,:self.pad] = 0
-       self.old[:,-self.pad:] = 0
+       if self.rank == self.size-1:
+         self.old[-2*self.pad:-self.pad,:] = 0
 
    def ghost_region(self):
       recv_request = []
       send_request = []
       if self.rank > 0:
-         bottom_ghost_next = self.new[0:self.pad,:]
-         recv_request.append(self.comm.Irecv(bottom_ghost_next, source = self.rank - 1, tag=1))
-         #self.new[0:4, :] = bottom_ghost_next
-         top_ghost_next = self.new[self.pad: 2*self.pad, :]
-         send_request.append(self.comm.Isend(top_ghost_next, dest = self.rank - 1, tag=0))
+         receive_previous = self.new[0:self.pad,:]
+         recv_request.append(self.comm.Irecv(receive_previous, source = self.rank - 1, tag=1))
+         send_previous = self.new[self.pad: 2*self.pad, :]
+         send_request.append(self.comm.Isend(send_previous, dest = self.rank - 1, tag=0))
 
       if self.rank < self.size - 1:
-         top_ghost_previous = self.new[-self.pad:, :]
-         recv_request.append(self.comm.Irecv(top_ghost_previous, source = self.rank + 1, tag=0))
-
-         bottom_ghost_previous = self.new[-8:-4, :].copy()
-
-         send_request.append(self.comm.Isend(bottom_ghost_previous, dest = self.rank + 1, tag=1))
+         receive_next = self.new[-self.pad:, :]
+         recv_request.append(self.comm.Irecv(receive_next, source = self.rank + 1, tag=0))
+         send_next = self.new[-2*self.pad:-self.pad, :]
+         send_request.append(self.comm.Isend(send_next, dest = self.rank + 1, tag=1))
+      #MPI.Request.waitall(recv_request, recv_status)
+      #MPI.Request.waitall(send_request, send_status)
       return recv_request, send_request
    
    def update_solution(self):
       if self.pad == 4:
-         self.old[4:4+self.lnx,4:self.lny-4] = 2*self.new[4:4+self.lnx,4:self.lny-4]-self.old[4:4+self.lnx,4:self.lny-4]+self.dtdx2*self.v[:,4:self.lny-4]**2*( 
-                        -1/560 *self.new[0:4+self.lnx-4,4:self.lny-4] 
-                        +8/315 *self.new[1:4+self.lnx-3,4:self.lny-4]  
-                        -1/5   *self.new[2:4+self.lnx-2,4:self.lny-4]  
-                        +8/5   *self.new[3:4+self.lnx-1,4:self.lny-4]  
-                        -205/72*self.new[4:4+self.lnx,4:self.lny-4]  
-                        +8/5   *self.new[5:4+self.lnx+1,4:self.lny-4]  
-                        -1/5   *self.new[6:4+self.lnx+2,4:self.lny-4]  
-                        +8/315 *self.new[7:4+self.lnx+3,4:self.lny-4]  
-                        -1/560 *self.new[8:4+self.lnx+4  ,4:self.lny-4])+self.dtdy2*self.v[:,4:self.lny-4]**2*( 
-                        -1/560 *self.new[4:4+self.lnx,0:self.lny-8] 
-                        +8/315 *self.new[4:4+self.lnx,1:self.lny-7]  
-                        -1/5   *self.new[4:4+self.lnx,2:self.lny-6]  
-                        +8/5   *self.new[4:4+self.lnx,3:self.lny-5]  
-                        -205/72*self.new[4:4+self.lnx,4:self.lny-4]  
-                        +8/5   *self.new[4:4+self.lnx,5:self.lny-3]  
-                        -1/5   *self.new[4:4+self.lnx,6:self.lny-2]  
-                        +8/315 *self.new[4:4+self.lnx,7:self.lny-1]  
-                        -1/560 *self.new[4:4+self.lnx,8:self.lny  ])
+         
+         self.old[4:-4,4:-4] = 2*self.new[4:-4,4:-4]-self.old[4:-4,4:-4]+self.dtdx2*self.v[:,4:-4]**2*( 
+                        -1/560 *self.new[0:-8,4:-4] 
+                        +8/315 *self.new[1:-7,4:-4]  
+                        -1/5   *self.new[2:-6,4:-4]  
+                        +8/5   *self.new[3:-5,4:-4]  
+                        -205/72*self.new[4:-4,4:-4]  
+                        +8/5   *self.new[5:-3,4:-4]  
+                        -1/5   *self.new[6:-2,4:-4]  
+                        +8/315 *self.new[7:-1,4:-4]  
+                        -1/560 *self.new[8:  ,4:-4])+self.dtdy2*self.v[:,4:-4]**2*( 
+                        -1/560 *self.new[4:-4,0:-8] 
+                        +8/315 *self.new[4:-4,1:-7]  
+                        -1/5   *self.new[4:-4,2:-6]  
+                        +8/5   *self.new[4:-4,3:-5]  
+                        -205/72*self.new[4:-4,4:-4]  
+                        +8/5   *self.new[4:-4,5:-3]  
+                        -1/5   *self.new[4:-4,6:-2]  
+                        +8/315 *self.new[4:-4,7:-1]  
+                        -1/560 *self.new[4:-4,8:  ])
       else:
          raise RuntimeError("Method not yet implemented for padding size other than 4")
       
    
    def write(self, time):
-       np.save(os.path.dirname(os.path.dirname(__file__))+'/outputs/wavefield_'+str(time).zfill(5)+'_'+str(self.rank).zfill(5), self.new)
+       np.save(os.path.dirname(os.path.dirname(__file__))+'/outputs/wavefield_'+str(time).zfill(5)+'_'+str(self.rank).zfill(5), self.new[self.pad:-self.pad,:])
                     
