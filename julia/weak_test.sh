@@ -21,8 +21,8 @@ mpiexec -n 4 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --e
 mpiexec -n 5 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=300,2500
 mpiexec -n 6 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=300,3000
 mpiexec -n 7 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=300,3500
-# mpiexec -n 8 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=300,4000
-# mpiexec -n 9 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=300,4500
-# mpiexec -n 10 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=300,5000
-# mpiexec -n 11 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=300,5500
-# mpiexec -n 12 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=300,6000
+mpiexec -n 8 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=300,4000
+mpiexec -n 9 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=300,4500
+mpiexec -n 10 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=300,5000
+mpiexec -n 11 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=300,5500
+mpiexec -n 12 julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=300,6000
