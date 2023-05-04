@@ -16,5 +16,5 @@ conda activate julia
 # Run julia script
 for n in {1..12} 
 do
-    mpiexec -n $n julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=1200,2000
+    mpiexec -n $n julia --project=WaveRave WaveRave/run_jwaverave_2d.jl --profile --extents=2400,4000
 done

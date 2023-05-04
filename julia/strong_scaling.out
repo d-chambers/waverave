@@ -1,0 +1,13 @@
+Job ran on: compute[160-171]
+Used 1 node(s) to run 10 simulations each with 600 time steps on a grid size of: (480, 800) average time=12.555 seconds
+Used 2 node(s) to run 10 simulations each with 600 time steps on a grid size of: (480, 800) average time=6.626 seconds
+Used 3 node(s) to run 10 simulations each with 600 time steps on a grid size of: (480, 800) average time=5.007 seconds
+Used 4 node(s) to run 10 simulations each with 600 time steps on a grid size of: (480, 800) average time=4.708 seconds
+Used 5 node(s) to run 10 simulations each with 600 time steps on a grid size of: (480, 800) average time=3.861 seconds
+Used 6 node(s) to run 10 simulations each with 600 time steps on a grid size of: (480, 800) average time=3.444 seconds
+Used 7 node(s) to run 10 simulations each with 600 time steps on a grid size of: (480, 800) average time=3.239 seconds
+Used 8 node(s) to run 10 simulations each with 600 time steps on a grid size of: (480, 800) average time=2.501 seconds
+Used 9 node(s) to run 10 simulations each with 600 time steps on a grid size of: (480, 800) average time=2.712 seconds
+Used 10 node(s) to run 10 simulations each with 600 time steps on a grid size of: (480, 800) average time=2.700 seconds
+Used 11 node(s) to run 10 simulations each with 600 time steps on a grid size of: (480, 800) average time=2.556 seconds
+Used 12 node(s) to run 10 simulations each with 600 time steps on a grid size of: (480, 800) average time=2.796 seconds
