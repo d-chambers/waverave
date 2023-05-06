@@ -173,6 +173,83 @@ The weak scaling behaves more stably with inefficiencies creeping up linearly un
 
 # Python
 
+## Overview and setup
+
+The Python version of the code is found in the python folder. To use it in a new account on Mio, the `set_environment.sh` script needs to be run from the python directory. This will take a few minutes as it creates a new conda environment with python installed also with mpi4py, numpy and matplotlib. Here are some other important files:
+
+The python code runs in 3 steps:
+
+1. Create Mesh or Velocity Model: Run with mpi src/mesher.py along with the extents as arguments
+
+2. Create Wavefield Simulation: Run with mpi src/run.py along with the extents as arguments and the number of simulations(not time_step) also
+
+3. Plot Wavefield: Plot wavefield using src/plot.py with the extents and number of precessors used as arguments
+
+All other parameter needed for simulations are being read from the src/params.py file. To switch off checkpointing, change the variable checkpointing to 0.
+
+`test_unit.sh` - Runs Unit tests
+
+`test.sh` - Runs the integrated test suite. 
+
+`weak_test.sh` - Slurm submission script to get the timing for weak scaling test.
+
+`strong_test.sh` - Slurm submission script to get the timing for strong scaling test
+
+`plot_scaling.py` - A simple python to plot the strong and weak scaling.
+
+## Testing
+
+A few unit tests are provided along with a integration test. For the integration test, the simulations for same parameter are run with 1 and 8 processes and their difference is calculated at the end. The maximum of the difference is returned which shows 0, which confirms that they are running well. To compare the time simulations, here are two simulations showing the wavefield evolution with time,
+
+![](images/python/process_1.gif "Simulation for 1 Processor)
+
+![](images/python/process_8.gif "Simulation for 8 Processors)
+
+They are quite similar, which suggests they are working well. The animations were made using ImageMagick convert, not provided in test. Instead, simulation plots at each time step is there.
+
+
+## Timing
+
+The following tables and figure shows the results of the strong and weak scaling tests:
+
+
+**Strong Scaling**
+
+|   cores |   timesteps |   grid_x |   grid_y |   time |   cells |
+|--------:|------------:|---------:|---------:|-------:|--------:|
+|       1 |        1000 |      800 |      480 |  5.913 |  384000 |
+|       2 |        1000 |      800 |      480 |  3.023 |  384000 |
+|       3 |        1000 |      800 |      480 |  1.895 |  384000 |
+|       4 |        1000 |      800 |      480 |  1.183 |  384000 |
+|       5 |        1000 |      800 |      480 |  1.197 |  384000 |
+|       6 |        1000 |      800 |      480 |  0.812 |  384000 |
+|       7 |        1000 |      800 |      480 |  0.721 |  384000 |
+|       8 |        1000 |      800 |      480 |  0.650 |  384000 |
+|       9 |        1000 |      800 |      480 |  0.602 |  384000 |
+|      10 |        1000 |      800 |      480 |  0.559 |  384000 |
+|      11 |        1000 |      800 |      480 |  0.518 |  384000 |
+|      12 |        1000 |      800 |      480 |  0.515 |  384000 |
+
+**Weak Scaling**
+
+|   nodes |   timesteps |   grid_x |   grid_y |   time  |   cells |
+|--------:|------------:|---------:|---------:|--------:|--------:|
+|       1 |         600 |      100 |       60 |  0.1047 |    6000 |
+|       2 |         600 |      200 |       60 |  0.1017 |   12000 |
+|       3 |         600 |      300 |       60 |  0.1074 |   18000 |
+|       4 |         600 |      400 |       60 |  0.1092 |   24000 |
+|       5 |         600 |      500 |       60 |  0.1069 |   30000 |
+|       6 |         600 |      600 |       60 |  0.1116 |   36000 |
+|       7 |         600 |      700 |       60 |  0.1153 |   42000 |
+|       8 |         600 |      800 |       60 |  0.1151 |   48000 |
+|       9 |         600 |      900 |       60 |  0.1216 |   54000 |
+|      10 |         600 |     1000 |       60 |  0.1266 |   60000 |
+|      11 |         600 |     1100 |       60 |  0.1337 |   66000 |
+|      12 |         600 |     1200 |       60 |  0.1773 |   72000 |
+
+
+![](images/python/Scaling_results.png "Results of scaling")
+
 # C
 
 # Code Comparisons
