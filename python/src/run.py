@@ -7,6 +7,8 @@ import numpy as np
 from mpi4py import MPI
 import params
 import os
+import time
+
 
 def time_simulation(start, end, wavefield, rank_source, isx, isy, F,  dt, output_dir, comm):
     """
@@ -66,7 +68,7 @@ def time_simulation_with_checkpoint(start, stop, wavefield, rank_source, isx, is
 
 
 def solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_dir):
-   
+    
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -91,13 +93,16 @@ def solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_d
     wavefield.vel(file)
     wavefield.set_exchange()
 
-
+    start=time.time()
     if checkpoint == 0:
        time_simulation(0, nt, wavefield, rank_source, isx, isy, F ,  dt, output_dir, comm) 
        
     
     else:
          time_simulation_with_checkpoint(0, nt, wavefield, rank_source, isx, isy, F, dt, checkpoint, output_dir, comm)
+    if rank==0:
+       end=time.time()
+       print("Average Time Taken for a "+str(nx)+"x"+str(ny)+" Simulation in "+str(size)+" Processors is "+str((end-start)/nt)+" seconds")
 
  
 
@@ -119,4 +124,7 @@ if __name__ == "__main__":
     ricker_sigma = params.ricker_sigma
     ricker_shift = params.ricker_shift
 
-    solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_dir)
+    
+    size = solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_dir)
+    
+
