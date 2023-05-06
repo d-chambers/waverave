@@ -82,7 +82,7 @@ def solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_d
 
     par2d = simulation.simul_par(nx, ny , dx, dy, comm, rank, size)
     par2d.size_allocate()
-    rank_source, isx, isy = par2d.source(sx, sy)
+    rank_source, isx, isy = par2d.source(sx, sy, pad)
     
     
 
