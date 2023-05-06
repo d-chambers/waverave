@@ -2,7 +2,7 @@
 #SBATCH -N 1
 #SBATCH --ntasks-per-node 12
 #SBATCH -t 00:50:00
-#SBATCH -J Pythonweak
+#SBATCH -J Pythonstrong
 
 # Record the node that we ran on
 echo "Job ran on: $SLURM_NODELIST"
