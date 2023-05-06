@@ -100,6 +100,7 @@ if __name__ == "__main__":
    dy = params.dy
    checkpoint = params.checkpoint
    output_dir = params.output_dir
+   os.system("mkdir "+output_dir+"/plots")
    plot_wave_one_rank(nx, ny, nt, dx, dt, checkpoint, output_dir,n)
    plot_vel_one_rank(nx, ny, nt, dx, dt, output_dir,n)
 
