@@ -4,7 +4,6 @@ import sys
 import solver
 import simulation 
 import numpy as np
-import matplotlib.pyplot as plt
 from mpi4py import MPI
 import params
 import os
@@ -72,7 +71,7 @@ def solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_d
     rank = comm.Get_rank()
     size = comm.Get_size()
     if type == 0:
-       source = solver.Ricker(nt, dt)
+       source = solver.Ricker(ricker_sigma, ricker_shift, nt, dt)
        F = source.source_time()
     else:
          print("No other source implemented other than Ricker")
@@ -86,11 +85,12 @@ def solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_d
     
     
 
-    file = os.path.dirname(os.path.dirname(__file__))+'./outputs/vel_'+str(rank).zfill(5)+'.npy'
+    file = os.path.dirname(os.path.dirname(__file__))+'/outputs/vel_'+str(rank).zfill(5)+'.npy'
 
-    wavefield = solver.wavefield(par2d.lnx, par2d.lny, pad, dx, dy, dt, comm, rank, size, file, par2d.method)
+    wavefield = solver.wavefield(par2d.lnx, par2d.lny, pad, dx, dy, dt, comm, rank, size, par2d.method)
+    wavefield.vel(file)
     wavefield.set_exchange()
-    print(np.shape(wavefield.new), rank)
+
 
     if checkpoint == 0:
        time_simulation(0, nt, wavefield, rank_source, isx, isy, F ,  dt, output_dir, comm) 
@@ -116,5 +116,7 @@ if __name__ == "__main__":
     type = params.type
     checkpoint = params.checkpoint
     output_dir = params.output_dir
+    ricker_sigma = params.ricker_sigma
+    ricker_shift = params.ricker_shift
 
     solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_dir)

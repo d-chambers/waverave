@@ -110,9 +110,9 @@ def plot_2d(array):
 
 
 
-def plot_vel_one_rank(nx, ny, nt, dx, dt):
+def plot_vel_one_rank(nx, ny, nt, dx, dt, output_dir):
 
-    output_dir = os.path.dirname(os.path.dirname(__file__))+'outputs'
+    #output_dir = os.path.dirname(os.path.dirname(__file__))+'outputs'
 
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -138,7 +138,7 @@ def plot_vel_one_rank(nx, ny, nt, dx, dt):
     plt.savefig(output_dir+"/plots/velocity.png")
 
 
-def plot_wave_one_rank(nx, ny, nt, dx, dt, checkpoint):
+def plot_wave_one_rank(nx, ny, nt, dx, dt, checkpoint, output_dir):
     if checkpoint != 0:
        time = np.arange(checkpoint,nt,checkpoint)
        if nt not in time:
@@ -146,7 +146,7 @@ def plot_wave_one_rank(nx, ny, nt, dx, dt, checkpoint):
     else:
         time =[nt]
 
-    output_dir = os.path.dirname(os.path.dirname(__file__))+'outputs'
+    #output_dir = os.path.dirname(os.path.dirname(__file__))+'outputs'
 
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -158,7 +158,7 @@ def plot_wave_one_rank(nx, ny, nt, dx, dt, checkpoint):
         start = 0
         for i in range(size):
             wave = np.load(output_dir+'/wavefield_'+str(t).zfill(5)+'_'+str(i).zfill(5)+'.npy')
-            if np.shape(wave)[1]==ny:
+            if np.shape(wave)[1]==ny and np.shape(wave)[0]!=nx:
                x = np.shape(wave)[0]
                end = start +x
                global_wave[start:end,:] = wave
@@ -190,6 +190,7 @@ if __name__ == "__main__":
    dx = params.dx
    dy = params.dy
    checkpoint = params.checkpoint
-   plot_wave_one_rank(nx, ny, nt, dx, dt, checkpoint)
-   plot_vel_one_rank(nx, ny, nt, dx, dt)
+   output_dir = params.output_dir
+   plot_wave_one_rank(nx, ny, nt, dx, dt, checkpoint, output_dir)
+   plot_vel_one_rank(nx, ny, nt, dx, dt, output_dir)
 

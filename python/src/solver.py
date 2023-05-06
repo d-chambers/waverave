@@ -3,7 +3,6 @@
 
 import numpy as np
 from mpi4py import MPI
-import params
 import os
 
 
@@ -11,7 +10,7 @@ import os
 
    
 class Ricker(object):
-   def __init__(self, nt, dt):
+   def __init__(self,ricker_sigma, ricker_shift, nt, dt):
       """
       Creates Ricker Wavelet Class Instance
       ss = sigma for Ricker wavelet
@@ -19,8 +18,8 @@ class Ricker(object):
       nt = total number of time step in the simulation
       dt = time step 
       """
-      self.ss = params.ricker_sigma
-      self.t0 = params.ricker_shift
+      self.ss = ricker_sigma
+      self.t0 = ricker_shift
       self.dt = dt
       self.nt = nt
       
@@ -32,7 +31,7 @@ class Ricker(object):
       
 
 class wavefield(object):
-   def __init__ (self, local_nx, local_ny, pad, dx, dy, dt, comm, rank, size, file, method):
+   def __init__ (self, local_nx, local_ny, pad, dx, dy, dt, comm, rank, size, method):
       """
       lnx = dimension in x direction in local array
       lny = dimension in y direction in local 
@@ -54,13 +53,13 @@ class wavefield(object):
       self.dtdx2 = (dt/float(dx))**2
       self.dtdy2 = (dt/float(dy))**2
       self.method = method
-      v = np.load(file)
-      lnx = np.shape(v)[0]
-      lny = np.shape(v)[1]
-      if lnx == self.lnx and lny == self.lny:
-          self.v = v
-      else:
-           raise IndexError("Rerun Mesher: Velocity Grid of rank "+str(self.rank)+ " has different dimensions from expected")
+      # v = np.load(file)
+      # lnx = np.shape(v)[0]
+      # lny = np.shape(v)[1]
+      # if lnx == self.lnx and lny == self.lny:
+      #     self.v = v
+      # else:
+      #      raise IndexError("Rerun Mesher: Velocity Grid of rank "+str(self.rank)+ " has different dimensions from expected")
       if self.method == 0:
          self.old = np.zeros((self.lnx+2*self.pad, self.lny))
          self.new = np.zeros((self.lnx+2*self.pad, self.lny)) 
@@ -70,14 +69,14 @@ class wavefield(object):
          self.old=self.old.T
          self.new=self.new.T        
    
-   # def vel(self, file):
-   #    v = np.load(file)
-   #    lnx = np.shape(v)[0]
-   #    lny = np.shape(v)[1]
-   #    if lnx == self.lnx and lny == self.lny:
-   #        self.v = np.zeros((self.nx, self.ny))
-   #    else:
-   #         raise IndexError("Rerun Mesher: Velocity Grid of rank "+str(self.rank)+ " has different dimensions from expected")
+   def vel(self, file):
+       v = np.load(file)
+       lnx = np.shape(v)[0]
+       lny = np.shape(v)[1]
+       if lnx == self.lnx and lny == self.lny:
+           self.v = v
+       else:
+            raise IndexError("Rerun Mesher: Velocity Grid of rank "+str(self.rank)+ " has different dimensions from expected")
       
    def inject_source(self, isx, isy, f, dt):
        self.new[isx, isy] += f*dt*dt
@@ -115,7 +114,7 @@ class wavefield(object):
        self.b0 = boundary_0
        self.b1 = boundary_1
        self.ve = v
-       print(self.rp,self.rn,self.sp,self.sn)
+       
 
    def ghost_region(self):
       recv_request=[]
@@ -135,7 +134,6 @@ class wavefield(object):
          recv_request.append(self.comm.Irecv(receive_next, source = self.rank + 1, tag=0))
          #self.new[self.rn[0]:self.rn[1],self.rn[2]: self.rn[3]] = receive_next
          send_next = self.new[self.sn[0]:self.sn[1],self.sn[2]: self.sn[3]]
-         print(np.max(send_next))
          send_request.append(self.comm.Isend(send_next, dest = self.rank + 1, tag=1))
       #MPI.Request.waitall(recv_request, recv_status)
       #MPI.Request.waitall(send_request, send_status)

@@ -21,7 +21,21 @@ def make_homogeneous(nx, ny, dx, dy, vel, output_dir):
     par2d.size_allocate()
     v = np.zeros((par2d.lnx, par2d.lny))
     v[:,:] = vel
-    print(np.shape(v), rank)
+
+    np.save(output_dir+'/vel_'+str(rank).zfill(5),v)
+
+
+def make_rank(nx, ny, dx, dy, output_dir):
+
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+
+    par2d = simulation.simul_par(nx, ny , dx, dy, comm, rank, size)
+    par2d.size_allocate()
+    v = np.zeros((par2d.lnx, par2d.lny))
+    v[:,:] = rank
+    #print(np.shape(v), rank)
 
     np.save(output_dir+'/vel_'+str(rank).zfill(5),v)
 
