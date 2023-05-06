@@ -31,20 +31,37 @@ class simul_par(object):
       size: Number of Processes in MPi
       rank: Rank of the processor it's working
       """
-      chunk_size = int(self.nx / self.size)
-      if self.rank < self.nx % self.size:
-         chunk_size+=1
-         start= self.rank*chunk_size
+      if self.nx >= self.ny:
+         chunk_size = int(self.nx / self.size)
+         if self.rank < self.nx % self.size:
+            chunk_size+=1
+            start= self.rank*chunk_size
+         else:
+            start = self.rank*chunk_size + self.nx % self.size
+         end = start+chunk_size
+         self.lnx = chunk_size
+         self.lny = self.ny
+         self.method=0
       else:
-         start = self.rank*chunk_size + self.nx % self.size
-      
-      end = start+chunk_size
+         chunk_size = int(self.ny / self.size)
+         if self.rank < self.ny % self.size:
+            chunk_size+=1
+            start= self.rank*chunk_size
+         else:
+            start = self.rank*chunk_size + self.ny % self.size
+         end = start+chunk_size
+         self.lnx = self.nx
+         self.lny = chunk_size
+         self.method = 1
 
       self.start = start
-      self.chunk_size = int(chunk_size)
+      self.chunk_size = chunk_size
       self.end = end
 
-   def source(self, sx, sy):
+
+
+
+   def source(self, sx, sy, pad):
       """ 
       Function to inject source in a proper location in a MPI case
       rank_source: rank of the domain where source should be injected
@@ -54,12 +71,19 @@ class simul_par(object):
 
       isx = int(sx / self.dx)
       isy = int(sy / self.dy)
-      if (isx-self.start) < self.chunk_size and (isx-self.start)>=0:
-        rank_source = self.rank
-        isx = isx-self.start
-        print("isx="+str(isx))
-        print(self.chunk_size)
-        isy = isy
-        return rank_source, isx, isy
-      else: 
-           return self.size+1, isx, isy 
+      if self.nx >= self.ny:
+         if (isx-self.start) < self.chunk_size and (isx-self.start)>=0:
+            rank_source = self.rank
+            isx = isx-self.start+pad
+            isy = isy
+            return rank_source, isx, isy
+         else: 
+            return self.size+1, isx, isy 
+      else:
+            if (isy-self.start) < self.chunk_size and (isy-self.start)>=0:
+               rank_source = self.rank
+               isy = isy-self.start+pad
+               isx = isx
+               return rank_source, isx, isy
+            else: 
+                 return self.size+1, isx, isy 

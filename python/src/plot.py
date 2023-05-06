@@ -122,13 +122,18 @@ def plot_vel_one_rank(nx, ny, nt, dx, dt):
     start = 0
     for i in range(size):
         wave = np.load(output_dir+'/vel_'+str(i).zfill(5)+'.npy')
-        
-        x = np.shape(wave)[0]
-        end = start +x
-        global_wave[start:end,:] = wave
-        start = end
-    
-    
+        if np.shape(wave)[1]==ny:
+            x = np.shape(wave)[0]
+            end = start +x
+            global_wave[start:end,:] = wave
+            start = end
+        else:
+            y = np.shape(wave)[1]
+            end = start + y
+            global_wave[:,start:end] = wave
+            start = end
+
+
     plot_2d(global_wave)
     plt.savefig(output_dir+"/plots/velocity.png")
 
@@ -153,14 +158,19 @@ def plot_wave_one_rank(nx, ny, nt, dx, dt, checkpoint):
         start = 0
         for i in range(size):
             wave = np.load(output_dir+'/wavefield_'+str(t).zfill(5)+'_'+str(i).zfill(5)+'.npy')
-            
-            x = np.shape(wave)[0]
-            end = start +x
-            global_wave[start:end,:] = wave
-            start = end
+            if np.shape(wave)[1]==ny:
+               x = np.shape(wave)[0]
+               end = start +x
+               global_wave[start:end,:] = wave
+               start = end
+            else:
+                y = np.shape(wave)[1]
+                end = start + y
+                global_wave[:,start:end] = wave
+                start = end
             
         plot_2d(global_wave)
-        plt.savefig(output_dir+"/plots/Wavefield_"+str(t).zfill(5)+"png")
+        plt.savefig(output_dir+"/plots/wavefield_"+str(t).zfill(5)+"png")
 
 
 

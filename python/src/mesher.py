@@ -11,7 +11,7 @@ from mpi4py import MPI
 
 
 
-def make_homogeneous(nx, ny, dx, dy, vel):
+def make_homogeneous(nx, ny, dx, dy, vel, output_dir):
 
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -19,13 +19,14 @@ def make_homogeneous(nx, ny, dx, dy, vel):
 
     par2d = simulation.simul_par(nx, ny , dx, dy, comm, rank, size)
     par2d.size_allocate()
-    v = np.zeros((par2d.chunk_size, par2d.ny))
+    v = np.zeros((par2d.lnx, par2d.lny))
     v[:,:] = vel
+    print(np.shape(v), rank)
 
-    np.save(os.path.dirname(os.path.dirname(__file__))+'./outputs/vel_'+str(rank).zfill(5),v)
+    np.save(output_dir+'/vel_'+str(rank).zfill(5),v)
 
 
-def make_layered(nx, ny, dx, dy, z, vel):
+def make_layered(nx, ny, dx, dy, z, vel, output_dir):
 
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -34,7 +35,7 @@ def make_layered(nx, ny, dx, dy, z, vel):
     par2d = simulation.simul_par(nx, ny , dx, dy, comm, rank, size)
     par2d.size_allocate()
 
-    v = np.zeros((par2d.chunk_size, par2d.ny))
+    v = np.zeros((par2d.lnx, par2d.lny))
     v[:,:] = vel[-1]
     for i in range(2, len(z)):
         if  z[-i] < par2d.end and z[-i] >= par2d.start:
@@ -50,8 +51,7 @@ def make_layered(nx, ny, dx, dy, z, vel):
 
 
                  
-    np.save(os.path.dirname(os.path.dirname(__file__))+'./outputs/vel_'+str(rank).zfill(5),v)
-    return 0
+    np.save(output_dir+'/vel_'+str(rank).zfill(5),v)
 
 if __name__ == "__main__":
     args = sys.argv
@@ -61,7 +61,8 @@ if __name__ == "__main__":
     dy  = params.dy
     z   = params.z
     vel = params.vel
+    output_dir = params.output_dir
 
-    make_homogeneous(nx, ny, dx, dy, vel)
+    make_homogeneous(nx, ny, dx, dy, vel, output_dir)
 
    

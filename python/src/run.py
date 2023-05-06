@@ -9,7 +9,7 @@ from mpi4py import MPI
 import params
 import os
 
-def time_simulation(start, end, wavefield, rank_source, isx, isy, F,  dt):
+def time_simulation(start, end, wavefield, rank_source, isx, isy, F,  dt, output_dir, comm):
     """
     Run Time Simulations for given time steps
     start: Starting time step
@@ -25,12 +25,11 @@ def time_simulation(start, end, wavefield, rank_source, isx, isy, F,  dt):
             wavefield.inject_source(isx, isy, F[i], dt)
         recv_status = []
         send_status = []
-        if wavefield.rank == 3:
-           x=wavefield.new
         recv_request, send_request = wavefield.ghost_region()
 
         MPI.Request.waitall(recv_request, recv_status)
         MPI.Request.waitall(send_request, send_status)
+        comm.Barrier()
 
 
 
@@ -43,10 +42,10 @@ def time_simulation(start, end, wavefield, rank_source, isx, isy, F,  dt):
 
         
         
-    wavefield.write(end)
+    wavefield.write(end, output_dir)
 
 
-def time_simulation_with_checkpoint(start, stop, wavefield, rank_source, isx, isy, F, dt, checkpoint):
+def time_simulation_with_checkpoint(start, stop, wavefield, rank_source, isx, isy, F, dt, checkpoint, output_dir, comm):
     """
     Time solution with checkpointing
     Run Time Simulations for given time steps
@@ -63,11 +62,11 @@ def time_simulation_with_checkpoint(start, stop, wavefield, rank_source, isx, is
     if stop not in time:
         time = np.append(time,stop)
     for i in range(len(time)-1):
-        time_simulation(time[i], time[i+1], wavefield, rank_source, isx, isy, F, dt)
+        time_simulation(time[i], time[i+1], wavefield, rank_source, isx, isy, F, dt, output_dir,comm)
 
 
 
-def solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint):
+def solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_dir):
    
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -85,18 +84,20 @@ def solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint):
     par2d.size_allocate()
     rank_source, isx, isy = par2d.source(sx, sy)
     
+    
 
     file = os.path.dirname(os.path.dirname(__file__))+'./outputs/vel_'+str(rank).zfill(5)+'.npy'
 
-    wavefield = solver.wavefield(par2d.chunk_size, par2d.ny, pad, dx, dy, dt, comm, rank, size, file)
-    
+    wavefield = solver.wavefield(par2d.lnx, par2d.lny, pad, dx, dy, dt, comm, rank, size, file, par2d.method)
+    wavefield.set_exchange()
+    print(np.shape(wavefield.new), rank)
 
     if checkpoint == 0:
-       time_simulation(0, nt, wavefield, rank_source, isx, isy, F ,  dt) 
+       time_simulation(0, nt, wavefield, rank_source, isx, isy, F ,  dt, output_dir, comm) 
        
     
     else:
-         time_simulation_with_checkpoint(0, nt, wavefield, rank_source, isx, isy, F, dt, checkpoint)
+         time_simulation_with_checkpoint(0, nt, wavefield, rank_source, isx, isy, F, dt, checkpoint, output_dir, comm)
 
  
 
@@ -114,5 +115,6 @@ if __name__ == "__main__":
     pad = params.pad
     type = params.type
     checkpoint = params.checkpoint
+    output_dir = params.output_dir
 
-    solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint)
+    solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_dir)

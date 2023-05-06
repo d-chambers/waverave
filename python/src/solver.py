@@ -32,7 +32,7 @@ class Ricker(object):
       
 
 class wavefield(object):
-   def __init__ (self, local_nx, local_ny, pad, dx, dy, dt, comm, rank, size, file):
+   def __init__ (self, local_nx, local_ny, pad, dx, dy, dt, comm, rank, size, file, method):
       """
       lnx = dimension in x direction in local array
       lny = dimension in y direction in local 
@@ -53,6 +53,7 @@ class wavefield(object):
       self.dy = dy
       self.dtdx2 = (dt/float(dx))**2
       self.dtdy2 = (dt/float(dy))**2
+      self.method = method
       v = np.load(file)
       lnx = np.shape(v)[0]
       lny = np.shape(v)[1]
@@ -60,8 +61,14 @@ class wavefield(object):
           self.v = v
       else:
            raise IndexError("Rerun Mesher: Velocity Grid of rank "+str(self.rank)+ " has different dimensions from expected")
-      self.old = np.zeros((self.lnx+2*self.pad, self.lny))
-      self.new = np.zeros((self.lnx+2*self.pad, self.lny)) 
+      if self.method == 0:
+         self.old = np.zeros((self.lnx+2*self.pad, self.lny))
+         self.new = np.zeros((self.lnx+2*self.pad, self.lny)) 
+      else:
+         self.old = np.zeros((self.lny+2*self.pad, self.lnx))
+         self.new = np.zeros(( self.lny+2*self.pad, self.lnx,))  
+         self.old=self.old.T
+         self.new=self.new.T        
    
    # def vel(self, file):
    #    v = np.load(file)
@@ -73,30 +80,62 @@ class wavefield(object):
    #         raise IndexError("Rerun Mesher: Velocity Grid of rank "+str(self.rank)+ " has different dimensions from expected")
       
    def inject_source(self, isx, isy, f, dt):
-      self.new[self.pad+isx, isy] += f*dt*dt
-      
+       self.new[isx, isy] += f*dt*dt
+
 
       
 
    def set_boundaries(self):
        if self.rank == 0:
-         self.old[self.pad:2*self.pad, :] = 0
+         self.old[self.b0[0]:self.b0[1],self.b0[2]:self.b0[3]] = 0
        if self.rank == self.size-1:
-         self.old[-2*self.pad:-self.pad,:] = 0
+         self.old[self.b1[0]:self.b1[1],self.b1[2]:self.b1[3]]  = 0
+
+   def set_exchange(self):
+       if self.method == 0:
+          r_previous = [0, self.pad, 0, self.lny] 
+          s_previous = [self.pad, 2*self.pad, 0, self.lny]
+          r_next = [self.lnx + self.pad, self.lnx +2*self.pad, 0, self.lny]
+          s_next = [self.lnx, self.lnx+self.pad, 0, self.lny]
+          boundary_0 = [self.pad, 2*self.pad, 0, self.lny]
+          boundary_1 = [self.lnx, self.lnx+self.pad,0, self.lny]
+          v =[0,self.lnx,self.pad,self.lny-self.pad]
+       else:
+           r_previous = [0, self.lnx, 0, self.pad] 
+           s_previous = [0, self.lnx, self.pad, 2*self.pad]
+           r_next = [0, self.lnx, self.lny + self.pad, self.lny+2*self.pad]
+           s_next = [0, self.lnx, self.lny, self.lny+self.pad]
+           boundary_0 = [0, self.lnx, self.pad, 2*self.pad ]
+           boundary_1 = [0, self.lnx, self.lny, self.lny+self.pad]
+           v = [self.pad, self.lnx-self.pad,  0, self.lny]
+       self.rp = r_previous
+       self.sp = s_previous
+       self.rn = r_next
+       self.sn = s_next
+       self.b0 = boundary_0
+       self.b1 = boundary_1
+       self.ve = v
+       print(self.rp,self.rn,self.sp,self.sn)
 
    def ghost_region(self):
-      recv_request = []
-      send_request = []
+      recv_request=[]
+      send_request=[] 
+      #receive_previous = np.zeros((self.rp[1]-self.rp[0], self.rp[3]-self.rp[2]))
+      #receive_next = np.zeros((self.rn[1]-self.rn[0], self.rn[3]-self.rn[2]))
       if self.rank > 0:
-         receive_previous = self.new[0:self.pad,:]
+         receive_previous = self.new[self.rp[0]:self.rp[1],self.rp[2]: self.rp[3]]
          recv_request.append(self.comm.Irecv(receive_previous, source = self.rank - 1, tag=1))
-         send_previous = self.new[self.pad: 2*self.pad, :]
+         #self.new[self.rp[0]:self.rp[1],self.rp[2]: self.rp[3]] = receive_previous
+         send_previous = self.new[self.sp[0]:self.sp[1],self.sp[2]: self.sp[3]]
          send_request.append(self.comm.Isend(send_previous, dest = self.rank - 1, tag=0))
 
       if self.rank < self.size - 1:
-         receive_next = self.new[-self.pad:, :]
+         
+         receive_next = self.new[self.rn[0]:self.rn[1],self.rn[2]: self.rn[3]]
          recv_request.append(self.comm.Irecv(receive_next, source = self.rank + 1, tag=0))
-         send_next = self.new[-2*self.pad:-self.pad, :]
+         #self.new[self.rn[0]:self.rn[1],self.rn[2]: self.rn[3]] = receive_next
+         send_next = self.new[self.sn[0]:self.sn[1],self.sn[2]: self.sn[3]]
+         print(np.max(send_next))
          send_request.append(self.comm.Isend(send_next, dest = self.rank + 1, tag=1))
       #MPI.Request.waitall(recv_request, recv_status)
       #MPI.Request.waitall(send_request, send_status)
@@ -104,8 +143,7 @@ class wavefield(object):
    
    def update_solution(self):
       if self.pad == 4:
-         
-         self.old[4:-4,4:-4] = 2*self.new[4:-4,4:-4]-self.old[4:-4,4:-4]+self.dtdx2*self.v[:,4:-4]**2*( 
+         self.old[4:-4,4:-4] = 2*self.new[4:-4,4:-4]-self.old[4:-4,4:-4]+self.dtdx2*self.v[self.ve[0]:self.ve[1],self.ve[2]:self.ve[3]]**2*( 
                         -1/560 *self.new[0:-8,4:-4] 
                         +8/315 *self.new[1:-7,4:-4]  
                         -1/5   *self.new[2:-6,4:-4]  
@@ -114,7 +152,7 @@ class wavefield(object):
                         +8/5   *self.new[5:-3,4:-4]  
                         -1/5   *self.new[6:-2,4:-4]  
                         +8/315 *self.new[7:-1,4:-4]  
-                        -1/560 *self.new[8:  ,4:-4])+self.dtdy2*self.v[:,4:-4]**2*( 
+                        -1/560 *self.new[8:  ,4:-4])+self.dtdy2*self.v[self.ve[0]:self.ve[1],self.ve[2]:self.ve[3]]**2*( 
                         -1/560 *self.new[4:-4,0:-8] 
                         +8/315 *self.new[4:-4,1:-7]  
                         -1/5   *self.new[4:-4,2:-6]  
@@ -128,6 +166,9 @@ class wavefield(object):
          raise RuntimeError("Method not yet implemented for padding size other than 4")
       
    
-   def write(self, time):
-       np.save(os.path.dirname(os.path.dirname(__file__))+'/outputs/wavefield_'+str(time).zfill(5)+'_'+str(self.rank).zfill(5), self.new[self.pad:-self.pad,:])
+   def write(self, time, output_dir):
+       if self.method==0:
+          np.save(output_dir+'/wavefield_'+str(time).zfill(5)+'_'+str(self.rank).zfill(5), self.new[self.pad:-self.pad,:])
+       else:
+          np.save(output_dir+'/wavefield_'+str(time).zfill(5)+'_'+str(self.rank).zfill(5), self.new[:,self.pad:-self.pad])
                     
