@@ -251,8 +251,9 @@ The following tables and figure shows the results of the strong and weak scaling
 |      11 |        1000 |     1100 |       60 |  0.1337 |   66000 |
 |      12 |        1000 |     1200 |       60 |  0.1773 |   72000 |
 
-
+Scaling Results Time:
 ![](images/python/Scaling_results_time.png "Results of scaling Time")
+Scaling Results Efficiency:
 ![](images/python/Scaling_results_eff.png "Results of scaling Time")
 
 # C
