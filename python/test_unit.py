@@ -141,7 +141,7 @@ if __name__ == "__main__":
     sx  = nx/2    ## Change this for arbitrary source
     sy  = ny/2    ## Change this for arbitrary source
     pad = params.pad
-    type = params.type
+#    type = params.type
     checkpoint = params.checkpoint
     output_dir = os.path.abspath(os.path.dirname(__file__))+"/outputs"
     
