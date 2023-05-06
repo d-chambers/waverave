@@ -31,6 +31,10 @@ c^2 (\frac{t^n_{i-1,j} -2t^n_{i,j} + t^n_{i+1,j}}{dx^2} +
  \frac{t^n_{i1,j-1} -2t^n_{i,j} + t^n_{i,j+1}}{dy^2} ) + c^2s
 $$
 
+$$
+\frac{{t^{n-1}_{i,j} - 2t^n_{i,j} + t^{n+1}_{i,j}}}{{dt^2}} = c^2 \left(\frac{{t^n_{i-1,j} - 2t^n_{i,j} + t^n_{i+1,j}}}{{dx^2}} + \frac{{t^n_{i,j-1} - 2t^n_{i,j} + t^n_{i,j+1}}}{{dy^2}}\right) + c^2s
+$$
+
 where n, i, and j indices represent time, x, and y increments respectively.
 
 The equation can then be rearranged to solve for the next time ($t^{n+1}_{i,j}$) based on the previous times. 
