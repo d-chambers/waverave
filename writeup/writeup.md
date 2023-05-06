@@ -257,6 +257,88 @@ Scaling Results Efficiency:
 ![](images/python/Scaling_results_eff.png "Results of scaling Time")
 
 # C
+## Overview and setup
+
+The C version of the code is found in the c folder. inside the folder, there are some other important files:
+
+`serial_simul.c` - c script to simulate the acoustic wave propagation in a serial fashion.
+
+`mpi_simul.c` - c script to simulate the acoustic wave propagation in a parallel fashion, note nx and ny (number of grid point) taken as input when executable is called.
+
+`serial_test.c` - test if the serial simulation code works as desired. 
+
+`mpi_test.c` - test if the simulation code works as desired, and mpi works as well. 
+
+`weak_scaling.sh` - Slurm submission script to get the timing for weak scaling test.
+
+`strong_scaliing.sh` - Slurm submission script to get the timing for strong scaling test.
+
+## Testing
+### Test for serial including:
+
+test the correctness of source injection.
+
+test for correctness of wave porpagtion.
+
+test for correctness of boundary condition.
+
+test for correct Courant number calculation.
+
+### Test for mpi including:
+
+
+In order to visualize the output, we plotted the wave simulation at various snapshots:
+
+![](images/c/c_wavefield.gif)
+
+In general, the simulation is clear. once it reaches the boundary, a minor numerical dispersion observed, indicate a finer grid spacing is necessary. Both MPI and serial work as the same, here show the example generated from MPI.
+
+## Timing
+
+The following tables and figure shows the results of the strong and weak scaling tests:
+
+**Strong Scaling**
+
+|   nodes |   timesteps |   grid_x |   grid_y |   time |   cells |
+|--------:|------------:|---------:|---------:|-------:|--------:|
+|       1 |         600 |      800 |      480 |  7.786 |  384000 |
+|       2 |         600 |      800 |      480 |  3.896 |  384000 |
+|       3 |         600 |      800 |      480 |  2.623 |  384000 |
+|       4 |         600 |      800 |      480 |  1.975 |  384000 |
+|       5 |         600 |      800 |      480 |  1.586 |  384000 |
+|       6 |         600 |      800 |      480 |  1.321 |  384000 |
+|       7 |         600 |      800 |      480 |  1.137 |  384000 |
+|       8 |         600 |      800 |      480 |  1.006 |  384000 |
+|       9 |         600 |      800 |      480 |  0.892 |  384000 |
+|      10 |         600 |      800 |      480 |  0.817 |  384000 |
+|      11 |         600 |      800 |      480 |  0.742 |  384000 |
+|      12 |         600 |      800 |      480 |  0.679 |  384000 |
+
+**Weak Scaling**
+
+|   nodes |   timesteps |   grid_x |   grid_y |   time |   cells |
+|--------:|------------:|---------:|---------:|-------:|--------:|
+|       1 |         600 |      100 |       60 |0.00003 |    6000 |
+|       2 |         600 |      200 |       60 |0.00099 |   12000 |
+|       3 |         600 |      300 |       60 |0.00485 |   18000 |
+|       4 |         600 |      400 |       60 |0.00383 |   24000 |
+|       5 |         600 |      500 |       60 |0.00457 |   30000 |
+|       6 |         600 |      600 |       60 |0.00567 |   36000 |
+|       7 |         600 |      700 |       60 |0.00634 |   42000 |
+|       8 |         600 |      800 |       60 |0.01095 |   48000 |
+|       9 |         600 |      900 |       60 |0.01376 |   54000 |
+|      10 |         600 |     1000 |       60 |0.01327 |   60000 |
+|      11 |         600 |     1100 |       60 | 0.0194 |   66000 |
+|      12 |         600 |     1200 |       60 | 0.0153 |   72000 |
+
+
+
+![](images/c/scaling.png)
+
+A few comments:
+
+
+
 
 # Code Comparisons
 
