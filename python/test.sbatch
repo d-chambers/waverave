@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -N 1
-#SBATCH --ntasks-per-node 12
+#SBATCH --ntasks-per-node 8
 
 #SBATCH -t 00:15:00
 
@@ -31,12 +31,14 @@ mpirun -n 1 python src/run.py 300 500 1
 
 echo ""
 echo "Plotting for 1 process"
+
+mkdir outputs/plots
 python src/plot.py 300 500 1
 
 mv outputs outputs_with_1_process
 
 mkdir outputs
-mkdir outputs/plots
+
 
 
 echo ""
@@ -51,7 +53,7 @@ echo ""
 mpirun -n 8 python src/run.py 300 500 1
 
 echo $start $end | awk '{print $2-$1}'
-
+mkdir outputs/plots
 echo ""
 echo "Plotting for 8 processes"
 python src/plot.py 300 500 8

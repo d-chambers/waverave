@@ -9,9 +9,8 @@ sx = 0
 sy = 0 
 pad = 4
 checkpoint = 50
-
 ##Sources
-type = 0
+s_type = 0
 
 ## Ricker
 ricker_sigma = 60

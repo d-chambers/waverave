@@ -1,0 +1,13 @@
+Job ran on: compute176
+Ran 5 Simulations: Average Time Taken for a 60x100 Simulation in 1 Processors is 0.10469679832458496 seconds
+Ran 5 Simulations: Average Time Taken for a 60x200 Simulation in 2 Processors is 0.10172972679138184 seconds
+Ran 5 Simulations: Average Time Taken for a 60x300 Simulation in 3 Processors is 0.10742993354797363 seconds
+Ran 5 Simulations: Average Time Taken for a 60x400 Simulation in 4 Processors is 0.10916595458984375 seconds
+Ran 5 Simulations: Average Time Taken for a 60x500 Simulation in 5 Processors is 0.10687475204467774 seconds
+Ran 5 Simulations: Average Time Taken for a 60x600 Simulation in 6 Processors is 0.11161632537841797 seconds
+Ran 5 Simulations: Average Time Taken for a 60x700 Simulation in 7 Processors is 0.11530394554138183 seconds
+Ran 5 Simulations: Average Time Taken for a 60x800 Simulation in 8 Processors is 0.1151888370513916 seconds
+Ran 5 Simulations: Average Time Taken for a 60x900 Simulation in 9 Processors is 0.12160816192626953 seconds
+Ran 5 Simulations: Average Time Taken for a 60x1000 Simulation in 10 Processors is 0.1266786575317383 seconds
+Ran 5 Simulations: Average Time Taken for a 60x1100 Simulation in 11 Processors is 0.13379926681518556 seconds
+Ran 5 Simulations: Average Time Taken for a 60x1200 Simulation in 12 Processors is 0.17733287811279297 seconds

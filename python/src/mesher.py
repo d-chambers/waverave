@@ -6,7 +6,7 @@ import os
 import params
 import simulation
 from mpi4py import MPI
-#import h5py
+import shutil
 
 
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     z   = params.z
     vel = params.vel
     output_dir = params.output_dir
-
+    os.system("rm -rf "+output_dir+"/*")
     make_homogeneous(nx, ny, dx, dy, vel, output_dir)
 
    

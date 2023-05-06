@@ -67,14 +67,14 @@ def time_simulation_with_checkpoint(start, stop, wavefield, rank_source, isx, is
 
 
 
-def solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_dir, nSims):
+def solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, s_type, checkpoint, output_dir, nSims):
     time_taken=0
     for j in range(nSims):
     
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
         size = comm.Get_size()
-        if type == 0:
+        if s_type == 0:
             source = solver.Ricker(ricker_sigma, ricker_shift, nt, dt)
             F = source.source_time()
         else:
@@ -89,10 +89,10 @@ def solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_d
         
         
 
-        file = os.path.dirname(os.path.dirname(__file__))+'/outputs/vel_'+str(rank).zfill(5)+'.npy'
+        file_n = os.path.abspath(os.path.dirname(__file__))+'/../outputs/vel_'+str(rank).zfill(5)+'.npy'
 
         wavefield = solver.wavefield(par2d.lnx, par2d.lny, pad, dx, dy, dt, comm, rank, size, par2d.method)
-        wavefield.vel(file)
+        wavefield.vel(file_n)
         wavefield.set_exchange()
 
         start=time.time()
@@ -106,7 +106,7 @@ def solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_d
             end=time.time()
             time_taken+=end-start
             if j == nSims-1:
-               print("Ran "+str(j)+"Simulations: Average Time Taken for a "+str(nx)+"x"+str(ny)+" Simulation in "+str(size)+" Processors is "+str((end-start)/j)+" seconds")
+               print("Ran "+str(nSims)+" Simulations: Average Time Taken for a "+str(nx)+"x"+str(ny)+" Simulation in "+str(size)+" Processors is "+str((end-start)/nSims)+" seconds")
 
  
 
@@ -115,6 +115,7 @@ if __name__ == "__main__":
     args = sys.argv
     nx  = int(args[1])
     ny  = int(args[2])
+    nSims = int(args[3])
     nt  = params.nt
     dx  = params.dx
     dy  = params.dy
@@ -122,13 +123,13 @@ if __name__ == "__main__":
     sx  = nx/2    ## Change this for arbitrary source
     sy  = ny/2    ## Change this for arbitrary source
     pad = params.pad
-    type = params.type
+    s_type = params.s_type
     checkpoint = params.checkpoint
     output_dir = params.output_dir
     ricker_sigma = params.ricker_sigma
     ricker_shift = params.ricker_shift
 
     
-    size = solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, type, checkpoint, output_dir)
+    solve_2d_mpi(nx, ny, nt, sx, sy, dx, dy, dt, pad, s_type, checkpoint, output_dir, nSims)
     
 
