@@ -17,17 +17,22 @@ Finite difference methods are a class of numerical methods for solving partial d
 The acoustic wave equation is given as:
 
 $$
+
 \frac{1}{c^2}\partial_t^2 p = \Delta p + s
+
 $$
+
 
 Where $p$ is the pressure, $c$ is the velocity, $\Delta$ is the Laplacian operator, and $s$ is the source. 
 
 Applying a simple centered first order approximation, this can be written as
 
 $$
+
 \frac{t^{n-1}_{i,j} - 2t^n_{i,j} + t^{n+1}_{i,j}}{dt^2}  = 
 c^2 (\frac{t^n_{i-1,j} -2t^n_{i,j} + t^n_{i+1,j}}{dx^2} +
  \frac{t^n_{i1,j-1} -2t^n_{i,j} + t^n_{i,j+1}}{dy^2} ) + c^2s
+
 $$
 
 where n, i, and j indices represent time, x, and y increments respectively.
@@ -35,9 +40,11 @@ where n, i, and j indices represent time, x, and y increments respectively.
 The equation can then be rearranged to solve for the next time ($t^{n+1}_{i,j}$) based on the previous times. 
 
 $$
+
 t^{n+1}_{i,j}  = 
 c^2 dt^2 (\frac{t^n_{i-1,j} -2t^n_{i,j} + t^n_{i+1,j}}{dx^2} +
  \frac{t^n_{i1,j-1} -2t^n_{i,j} + t^n_{i,j+1}}{dy^2} ) + c^2 dt^2 s - t^{n-1}_{i,j} + 2t^n_{i,j} 
+
 $$
 
 This defines the basic time stepping algorithm; for each time step the Laplacian is implemented as a convolution filter then multiplied by the ($c^2 dt^2$) and the wavefield at two previous timesteps is subtracted and two times the previous wavefield added. The source times $c^2dt^2$ is injected at specified times and locations. In practice, however, a higher order approximation is usually used for the Laplacian operator. In this project we used a 4th order central difference resulting in a stencil with the length of 9. 
