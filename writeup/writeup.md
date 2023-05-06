@@ -20,6 +20,7 @@ $$
 \frac{1}{c^2}\partial_t^2 p = \Delta p + s
 $$
 
+
 Where $p$ is the pressure, $c$ is the velocity, $\Delta$ is the Laplacian operator, and $s$ is the source. 
 
 Applying a simple centered first order approximation, this can be written as
@@ -29,6 +30,8 @@ $$
 c^2 (\frac{t^n_{i-1,j} -2t^n_{i,j} + t^n_{i+1,j}}{dx^2} +
  \frac{t^n_{i1,j-1} -2t^n_{i,j} + t^n_{i,j+1}}{dy^2} ) + c^2s
 $$
+
+
 
 where n, i, and j indices represent time, x, and y increments respectively.
 
@@ -175,7 +178,7 @@ The weak scaling behaves more stably with inefficiencies creeping up linearly un
 
 ## Overview and setup
 
-The Python version of the code is found in the python folder. To use it in a new account on Mio, the `set_environment.sh` script needs to be run from the python directory. This will take a few minutes as it creates a new conda environment with python installed also with mpi4py, numpy and matplotlib. Here are some other important files:
+The Python version of the code is found in the python folder. To use it in a new account on Mio, the `set_environment.sh` script needs to be run from the python directory. This will take a few minutes as it creates a new conda environment with python installed also with mpi4py, numpy and matplotlib. Instead of using convolution, it uses a vectorized array update by taking the help of numpy array utilities. It is implemented for 8th order accuracy. Here are some other important files:
 
 The python code runs in 3 steps:
 
