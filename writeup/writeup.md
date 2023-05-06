@@ -25,11 +25,11 @@ Where $p$ is the pressure, $c$ is the velocity, $\Delta$ is the Laplacian operat
 
 Applying a simple centered first order approximation, this can be written as
 
-\[
+$$
 \frac{t^{n-1}_{i,j} - 2t^n_{i,j} + t^{n+1}_{i,j}}{dt^2}  = 
 c^2 (\frac{t^n_{i-1,j} -2t^n_{i,j} + t^n_{i+1,j}}{dx^2} +
  \frac{t^n_{i1,j-1} -2t^n_{i,j} + t^n_{i,j+1}}{dy^2} ) + c^2s
-\]
+$$
 
 
 
