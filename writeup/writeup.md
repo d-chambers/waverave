@@ -201,9 +201,9 @@ All other parameter needed for simulations are being read from the src/params.py
 
 A few unit tests are provided along with a integration test. For the integration test, the simulations for same parameter are run with 1 and 8 processes and their difference is calculated at the end. The maximum of the difference is returned which shows 0, which confirms that they are running well. To compare the time simulations, here are two simulations showing the wavefield evolution with time,
 
-![](images/python/process_1.gif "Simulation for 1 Processor)
+![](images/python/process_1.gif "Simulation for 1 Processor")
 
-![](images/python/process_8.gif "Simulation for 8 Processors)
+![](images/python/process_8.gif "Simulation for 8 Processors")
 
 They are quite similar, which suggests they are working well. The animations were made using ImageMagick convert, not provided in test. Instead, simulation plots at each time step is there.
 
