@@ -192,9 +192,9 @@ All other parameter needed for simulations are being read from the src/params.py
 
 `test.sh` - Runs the integrated test suite. 
 
-`weak_test.sh` - Slurm submission script to get the timing for weak scaling test.
+`weak_scaling.sh` - Slurm submission script to get the timing for weak scaling test.
 
-`strong_test.sh` - Slurm submission script to get the timing for strong scaling test
+`strong_scaling.sh` - Slurm submission script to get the timing for strong scaling test
 
 `plot_scaling.py` - A simple python to plot the strong and weak scaling.
 
