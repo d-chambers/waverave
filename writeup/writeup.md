@@ -200,7 +200,9 @@ All other parameter needed for simulations are being read from the src/params.py
 
 ## Testing
 
-A few unit tests are provided along with a integration test. For the integration test, the simulations for same parameter are run with 1 and 8 processes and their difference is calculated at the end. The maximum of the difference is returned which shows 0, which confirms that they are running well. To compare the time simulations, here are two simulations showing the wavefield evolution with time,
+A few unit tests are provided along with a integration test. A few unit tests are provided along with a integration test. The first checks if the domain decomposition is working by testing with evenly distributed number of dimensions and processes. The second tests checks if the source is being injected in the correct location. Third test checks if the correct velocity mesh is read by the correct rank. The fourth test checks the MPI communication at ghost region. It creates homogeneous wavefield with value equal to the rank. It then does the ghost region communication and after the test we test if the padded regions have values equal to rank+1 or rank-1.
+
+For the integration test, the simulations for same parameter are run with 1 and 8 processes and their difference is calculated at the end. The maximum of the difference is returned which shows 0, which confirms that they are running well. To compare the time simulations, here are two simulations showing the wavefield evolution with time,
 
 ### Simulation for 1 Process
 ![](images/python/process_1.gif "Simulation for 1 Processor")
