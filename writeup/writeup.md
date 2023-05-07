@@ -25,21 +25,14 @@ Where $p$ is the pressure, $c$ is the velocity, $\Delta$ is the Laplacian operat
 
 Applying a simple centered first order approximation, this can be written as
 
-$$
-\frac{t^{n-1}_{i,j} - 2t^n_{i,j} + t^{n+1}_{i,j}}{dt^2}  = c^2 (\frac{t^n_{i-1,j} -2t^n_{i,j} + t^n_{i+1,j}}{dx^2} + \frac{t^n_{i1,j-1} -2t^n_{i,j} + t^n_{i,j+1}}{dy^2} ) + c^2s
-$$
-
+![equation](https://latex.codecogs.com/svg.image?\frac{t^{n-1}_{i,j}&space;-&space;2t^n_{i,j}&space;&plus;&space;t^{n&plus;1}_{i,j}}{dt^2}&space;&space;=&space;c^2&space;(\frac{t^n_{i-1,j}&space;-2t^n_{i,j}&space;&plus;&space;t^n_{i&plus;1,j}}{dx^2}&space;&plus;&space;\frac{t^n_{i1,j-1}&space;-2t^n_{i,j}&space;&plus;&space;t^n_{i,j&plus;1}}{dy^2}&space;)&space;&plus;&space;c^2s)
 
 
 where n, i, and j indices represent time, x, and y increments respectively.
 
 The equation can then be rearranged to solve for the next time ($t^{n+1}_{i,j}$) based on the previous times. 
 
-$$
-t^{n+1}_{i,j}  = 
-c^2 dt^2 (\frac{t^n_{i-1,j} -2t^n_{i,j} + t^n_{i+1,j}}{dx^2} +
- \frac{t^n_{i1,j-1} -2t^n_{i,j} + t^n_{i,j+1}}{dy^2} ) + c^2 dt^2 s - t^{n-1}_{i,j} + 2t^n_{i,j} 
-$$
+![equation](https://latex.codecogs.com/svg.image?\small&space;&space;t^{n&plus;1}_{i,j}&space;&space;=&space;c^2&space;dt^2&space;(\frac{t^n_{i-1,j}&space;-2t^n_{i,j}&space;&plus;&space;t^n_{i&plus;1,j}}{dx^2}&space;&plus;&space;\frac{t^n_{i1,j-1}&space;-2t^n_{i,j}&space;&plus;&space;t^n_{i,j&plus;1}}{dy^2}&space;)&space;&plus;&space;c^2&space;dt^2&space;s&space;-&space;t^{n-1}_{i,j}&space;&plus;&space;2t^n_{i,j}&space;)
 
 This defines the basic time stepping algorithm; for each time step the Laplacian is implemented as a convolution filter then multiplied by the ($c^2 dt^2$) and the wavefield at two previous timesteps is subtracted and two times the previous wavefield added. The source times $c^2dt^2$ is injected at specified times and locations. In practice, however, a higher order approximation is usually used for the Laplacian operator. In this project we used a 4th order central difference resulting in a stencil with the length of 9. 
 
@@ -285,6 +278,10 @@ test for correctness of wave porpagtion.
 test for correctness of boundary condition.
 
 test for correct Courant number calculation.
+
+test for wave propagation direction.
+
+test for symmetry of the wave.
 
 ### Test for mpi including:
 
