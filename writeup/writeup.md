@@ -292,6 +292,7 @@ test for checking boundary data exchange.
 
 test for subdomain correctly divided.
 
+#### to compile mpi_test.c please run:  mpicc mpi_test.c -o mpi_test -lm -std=c99 then specify the arguemnt for nx and ny for the executable file. 
 
 In order to visualize the output, we plotted the wave simulation at various snapshots:
 
