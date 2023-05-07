@@ -288,6 +288,10 @@ test for correct Courant number calculation.
 
 ### Test for mpi including:
 
+test for checking boundary data exchange.
+
+test for subdomain correctly divided.
+
 
 In order to visualize the output, we plotted the wave simulation at various snapshots:
 
