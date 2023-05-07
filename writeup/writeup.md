@@ -25,7 +25,7 @@ Where $p$ is the pressure, $c$ is the velocity, $\Delta$ is the Laplacian operat
 
 Applying a simple centered first order approximation, this can be written as
 
-![equation](https://latex.codecogs.com/svg.image?\frac{t^{n-1}_{i,j}&space;-&space;2t^n_{i,j}&space;&plus;&space;t^{n&plus;1}_{i,j}}{dt^2}&space;&space;=&space;c^2&space;(\frac{t^n_{i-1,j}&space;-2t^n_{i,j}&space;&plus;&space;t^n_{i&plus;1,j}}{dx^2}&space;&plus;&space;\frac{t^n_{i1,j-1}&space;-2t^n_{i,j}&space;&plus;&space;t^n_{i,j&plus;1}}{dy^2}&space;)&space;&plus;&space;c^2s)
+
 
 ```math
 \frac{t^{n-1}_{i,j} - 2t^n_{i,j} + t^{n+1}_{i,j}}{dt^2}  = 
@@ -38,7 +38,6 @@ where n, i, and j indices represent time, x, and y increments respectively.
 
 The equation can then be rearranged to solve for the next time ($t^{n+1}_{i,j}$) based on the previous times. 
 
-![equation](https://latex.codecogs.com/svg.image?\small&space;&space;t^{n&plus;1}_{i,j}&space;&space;=&space;c^2&space;dt^2&space;(\frac{t^n_{i-1,j}&space;-2t^n_{i,j}&space;&plus;&space;t^n_{i&plus;1,j}}{dx^2}&space;&plus;&space;\frac{t^n_{i1,j-1}&space;-2t^n_{i,j}&space;&plus;&space;t^n_{i,j&plus;1}}{dy^2}&space;)&space;&plus;&space;c^2&space;dt^2&space;s&space;-&space;t^{n-1}_{i,j}&space;&plus;&space;2t^n_{i,j}&space;)
 
 ```math
 t^{n+1}_{i,j}  = 
