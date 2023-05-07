@@ -5,6 +5,6 @@ module load apps/python3/2022.10
 
 ##create conda environment
 
-conda create --name mpirun python=3.8 numpy matplotlib mpi4py
+conda create --name mpirun -y python=3.8 numpy matplotlib mpi4py
 
-
+conda activate mpirun

@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH -N 2
-#SBATCH --ntasks-per-node 6 
+#SBATCH -N 1
+#SBATCH --ntasks-per-node 8 
 #SBATCH -t 00:15:00
 
 
