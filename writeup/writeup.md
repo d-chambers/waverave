@@ -40,6 +40,12 @@ The equation can then be rearranged to solve for the next time ($t^{n+1}_{i,j}$)
 
 ![equation](https://latex.codecogs.com/svg.image?\small&space;&space;t^{n&plus;1}_{i,j}&space;&space;=&space;c^2&space;dt^2&space;(\frac{t^n_{i-1,j}&space;-2t^n_{i,j}&space;&plus;&space;t^n_{i&plus;1,j}}{dx^2}&space;&plus;&space;\frac{t^n_{i1,j-1}&space;-2t^n_{i,j}&space;&plus;&space;t^n_{i,j&plus;1}}{dy^2}&space;)&space;&plus;&space;c^2&space;dt^2&space;s&space;-&space;t^{n-1}_{i,j}&space;&plus;&space;2t^n_{i,j}&space;)
 
+```math
+t^{n+1}_{i,j}  = 
+c^2 dt^2 (\frac{t^n_{i-1,j} -2t^n_{i,j} + t^n_{i+1,j}}{dx^2} +
+ \frac{t^n_{i1,j-1} -2t^n_{i,j} + t^n_{i,j+1}}{dy^2} ) + c^2 dt^2 s - t^{n-1}_{i,j} + 2t^n_{i,j} 
+ ```
+
 This defines the basic time stepping algorithm; for each time step the Laplacian is implemented as a convolution filter then multiplied by the ($c^2 dt^2$) and the wavefield at two previous timesteps is subtracted and two times the previous wavefield added. The source times $c^2dt^2$ is injected at specified times and locations. In practice, however, a higher order approximation is usually used for the Laplacian operator. In this project we used a 4th order central difference resulting in a stencil with the length of 9. 
 
 The number of operations depends on the grid size, and is largely dominated by the Laplacian operator. Let $L$ be one minus the length of the centered Laplacian operator divided by two (4 in our case). Then, assuming a grid padded $l$ zeros (with dimensions $X$ by $Y$ before padding) the total number of operations related to the Laplacian is $2LXY$. This has to be calculated every time step, of a total number of timesteps $T_s$. There are also some other operations associated with adding the previous time steps and multiplying velocities, but to a first order approximation there will be $2lXYT_s$ operations. If a square Laplacian stencil is used this becomes $l^2XYT_s$. 
