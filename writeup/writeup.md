@@ -256,6 +256,8 @@ Scaling Results Time:
 Scaling Results Efficiency:
 ![](images/python/Scaling_results_eff.png "Results of scaling Time")
 
+As we can see from the plots, the time reduces as we use more cores for the simulations. If we look at the efficiency curve, it loses efficiency linearly in log scale upto most of the nodes. We spot a sudden decrease in efficiency when 12 cores are used both for strong as well as weak scaling case.
+
 # C
 ## Overview and setup
 
@@ -341,6 +343,8 @@ A few comments:
 
 
 # Code Comparisons
+
+As seen from the times from C, Python and Julia, C works best by looking at the absolute time. Python and Julia takes much more time to run the same simulations compared to C. There maybe some mismatch in implementation strategy but still C is much faster which is quite expected.
 
 
 # References
