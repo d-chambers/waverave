@@ -184,11 +184,11 @@ The Python version of the code is found in the python folder. To use it in a new
 
 The python code runs in 3 steps:
 
-1. Create Mesh or Velocity Model: Run with mpi src/mesher.py along with the extents as arguments
+1. Create Mesh or Velocity Model: Run with mpi `src/mesher.py` along with the extents as arguments
 
-2. Create Wavefield Simulation: Run with mpi src/run.py along with the extents as arguments and the number of simulations(not time_step) also
+2. Create Wavefield Simulation: Run with mpi `src/run.py` along with the extents as arguments and the number of simulations(not time_step) also
 
-3. Plot Wavefield: Plot wavefield using src/plot.py with the extents and number of precessors used as arguments
+3. Plot Wavefield: Plot wavefield using `src/plot.py` with the extents and number of precessors used as arguments
 
 All other parameter needed for simulations are being read from the src/params.py file. To switch off checkpointing, change the variable checkpointing to 0.
 
@@ -261,6 +261,7 @@ Scaling Results Efficiency:
 ![](images/python/Scaling_results_eff.png "Results of scaling Time")
 
 As we can see from the plots, the time reduces as we use more cores for the simulations. If we look at the efficiency curve, it loses efficiency linearly in log scale upto most of the nodes. We spot a sudden decrease in efficiency when 12 cores are used both for strong as well as weak scaling case.
+The efficiency loss is expected due to the increased communication overhead and also the fact not the whole process can be parallelized. One of the contributing factor towards aalowdown is writing out outputs after certain timesteps. Code can be made faster if instead of writing out the entire wavefield, if we only write out the displacement values at spatial points where we are interested, which is the case for Geophysical applications.
 
 # C
 ## Overview and setup
