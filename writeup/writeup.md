@@ -45,9 +45,9 @@ c^2 dt^2 (\frac{t^n_{i-1,j} -2t^n_{i,j} + t^n_{i+1,j}}{dx^2} +
  \frac{t^n_{i1,j-1} -2t^n_{i,j} + t^n_{i,j+1}}{dy^2} ) + c^2 dt^2 s - t^{n-1}_{i,j} + 2t^n_{i,j} 
  ```
 
-This defines the basic time stepping algorithm; for each time step the Laplacian is implemented as a convolution filter then multiplied by the ($c^2 dt^2$) and the wavefield at two previous timesteps is subtracted and two times the previous wavefield added. The source times $c^2dt^2$ is injected at specified times and locations. In practice, however, a higher order approximation is usually used for the Laplacian operator. In this project we used a 4th order central difference resulting in a stencil with the length of 9. 
+The basic time stepping algorithm is as follows: for each time step the Laplacian is calculated then multiplied by $c^2 dt^2$ and the wavefield at two previous timesteps is subtracted and two times the previous wavefield added. The source pressure $c^2dt^2$ is injected at specified times and locations. In practice, a higher order approximation is usually used for the Laplacian operator than the 3 point stencil shown above. In this project we used a 4th order central difference resulting in a p element centered stencil. 
 
-The number of operations depends on the grid size, and is largely dominated by the Laplacian operator. Let $L$ be one minus the length of the centered Laplacian operator divided by two (4 in our case). Then, assuming a grid padded $l$ zeros (with dimensions $X$ by $Y$ before padding) the total number of operations related to the Laplacian is $2LXY$. This has to be calculated every time step, of a total number of timesteps $T_s$. There are also some other operations associated with adding the previous time steps and multiplying velocities, but to a first order approximation there will be $2lXYT_s$ operations. If a square Laplacian stencil is used this becomes $l^2XYT_s$. 
+The number of operations depends on the grid size, and is largely dominated by the Laplacian operator. Let $L$ be one minus the length of the centered Laplacian operator divided by two (4 in our case). Then, assuming a grid padded with $l$ zeros (with dimensions $X$ by $Y$ before padding) the total number of operations related to the Laplacian is $2LXY$. This has to be calculated every time step, for a total number of timesteps $T_s$. There are also some other operations associated with adding the previous time steps and multiplying velocities, but to a first order approximation, there will be about $2lXYT_s$ operations. If a square Laplacian stencil is used this becomes $l^2XYT_s$, as is the case with the Julia implementation but not C or Python. 
 
 We selected a homogeneous 2d acoustic domain with a single explosive source occurring in the center of the domain whose source time function is a 60Hz Ricker wavelet. 
 
@@ -68,15 +68,14 @@ For simplicity we simply use fixed (reflecting) boundary conditions.
 
 We are decomposing the 2D domain in strips along the long dimension of the model. For example, for a grid size of (X=300 Y=600) and using two nodes, each node would have a s subdomain of (300, 300), or, accounting for padding (300 + $l$, 300 + $l$). 
  
-After each time step, $Xl$ points need to be sent to each neighbor and the same number received, with a total transfer of $4(D-1)Xl$ floating point values, where $D$ is the number of domains. For example, in the following figure Domain A needs to send the region labeled A' to B so B has the correct values in its padded region fo the next time step. Conversely, region B needs to send B' to A so region A has the correct padded values. This transfer occurs after each time step. 
+After each time step, $Xl$ points need to be sent to each neighbor and the same number received, with a total transfer of $4(D-1)Xl$ floating point values, where $D$ is the number of domains. For example, in the following figure Domain A needs to send the region labeled A' to B so B has the correct values in its padded region for the next time step. Conversely, region B needs to send B' to A so region A has the correct padded values. This transfer occurs during each time step. 
 
-This problem is not embarrassingly parallel because these exchanges must occur for each time step for the next time step's value to be calculated correctly. 
+This problem is not embarrassingly parallel because these exchanges must occur for each time step for the next time step's value to be calculated correctly. Hence, there can be hundreds or thousands of different point-to-point transfers throughout the simulation depending on the total time.
 
 Our simulations start with a homogenous (all 0s) wavefield. A pressure source is then ejected with a Ricker wavelet with a center frequency of 60 Hz in the center of the model. 
 
 ![](images/ghost_region.png)
-
-transferred between the sub-domain borders (known as ghost regions).  
+ 
 
 # Question 3
 
@@ -88,7 +87,7 @@ See the following sections for information on each implementation's testing stra
 
 > Describe the aspect of your code you chose to visualize to understand (and quickly check) whether the code is behaving as expected. What did you visualize? How did you do this? How do you know it should look like this? Include some of the figures you produced. 
 
-See the following sections for the requested information for each implementation.
+See the following sections for the requested information for each implementation. Essentially, we simply plot the wavefield at various time snapshots throughout the simulation.
 
 
 # Question 5
@@ -105,7 +104,7 @@ Weak scalability tests were conducted using a grid size of $100N$ (x) by $60$ (y
 
 ## Overview and setup
 
-The Julia version of the code is found in the julia folder. To use it in a new account on Mio, the `setup_environment.sh` script needs to be run. This will take a few minutes as it creates a new conda environment with julia installed, then uses julia to instantiate the WaveRave package. Here are some other important files:
+The Julia version of the code is found in the julia folder. To use it on a new account on Mio, the `setup_environment.sh` script needs to be run. This will take a few minutes as it creates a new conda environment with julia installed, then uses julia to instantiate the WaveRave package and install other Julia dependencies. Here is a summary of the key files:
 
 `WaveRave/run_jwaverave_2d.jl` - Julia script to run the simulation. Accepts a variety of command line arguments for controlling the simulation. 
 
@@ -120,7 +119,7 @@ The Julia version of the code is found in the julia folder. To use it in a new a
 `make_scaling_stuff.py` - A simple python script to make markdown tables and plot of the strong and weak scaling. 
 
 ## Testing
-There are approximately 30 tests which can be run using the `tests.sh` script. These include some simple unit tests as well as a few end2end tests. One test ensures the serial version of the code outputs the same results as the MPI version for nodes from 1 to 4, so we are confident the serial code behaves the same as the parallel code.
+There are approximately 30 tests which can be run using the `tests.sh` script. These include some simple unit tests as well as a few end-to-end tests. One test ensures the serial version of the code outputs the same results as the MPI version for nodes from 1 to 4, so we are confident the serial code behaves the same as the parallel code.
 
 In order to visualize the output, we plotted the wave simulation at various snapshots:
 
@@ -171,7 +170,7 @@ The following tables and figure shows the results of the strong and weak scaling
 ![](images/julia/scaling.png)
 
 A few comments:
-First, the strong scaling picture is rather bleak for the tested domain size. The largest decrease in time is from 11 to 2 nodes, where the total run time is nearly cut in half. The third through 8th nodes then decrease the run time by a smaller percentage, roughly 1 second each node, until node 8, at which point the time starts to increase. 
+First, the strong scaling picture is rather bleak for the tested domain size. The largest decrease in time is from 1 to 2 nodes, where the total run time is nearly cut in half. The third through 8th nodes then decrease the run time by a smaller percentage, roughly 1 second each node, until node 8, at which point the time starts to increase. 
 
 The weak scaling behaves more stably with inefficiencies creeping up linearly until 12 nodes are added, at which point the nodes are approximately 50% as efficient as the single node case.
 
@@ -180,17 +179,17 @@ The weak scaling behaves more stably with inefficiencies creeping up linearly un
 
 ## Overview and setup
 
-The Python version of the code is found in the python folder. To use it in a new account on Mio, the `set_environment.sh` script needs to be run from the python directory. This will take a few minutes as it creates a new conda environment with python installed also with mpi4py, numpy and matplotlib. Instead of using convolution, it uses a vectorized array update by taking the help of numpy array utilities. It is implemented for 8th order accuracy. Here are some other important files:
+The Python version of the code is found in the python folder. To use it in a new account on Mio, the `set_environment.sh` script needs to be run from the python directory. This will take a few minutes as it creates a new conda environment with python installed also with mpi4py, numpy and matplotlib. Instead of using convolution, it uses a vectorized array update using numpy array utilities. It is implemented for 8th order accuracy. Here are some other important files:
 
 The python code runs in 3 steps:
 
 1. Create Mesh or Velocity Model: Run with mpi `src/mesher.py` along with the extents as arguments
 
-2. Create Wavefield Simulation: Run with mpi `src/run.py` along with the extents as arguments and the number of simulations(not time_step) also
+2. Create Wavefield Simulation: Run with mpi `src/run.py` along with the extents as arguments and the number of simulations(not time_step)
 
 3. Plot Wavefield: Plot wavefield using `src/plot.py` with the extents and number of precessors used as arguments
 
-All other parameter needed for simulations are being read from the src/params.py file. To switch off checkpointing, change the variable checkpointing to 0.
+All other parameter needed for simulations are read from the src/params.py file. To switch off checkpointing, change the variable checkpointing to 0.
 
 `test_unit.sh` - Runs Unit tests
 
@@ -204,7 +203,7 @@ All other parameter needed for simulations are being read from the src/params.py
 
 ## Testing
 
-A few unit tests are provided along with a integration test. A few unit tests are provided along with a integration test. The first checks if the domain decomposition is working by testing with evenly distributed number of dimensions and processes. The second tests checks if the source is being injected in the correct location. Third test checks if the correct velocity mesh is read by the correct rank. The fourth test checks the MPI communication at ghost region. It creates homogeneous wavefield with value equal to the rank. It then does the ghost region communication and after the test we test if the padded regions have values equal to rank+1 or rank-1.
+A few unit tests are provided along with a integration test. The first checks if the domain decomposition is working by testing with evenly distributed number of dimensions and processes. The second tests checks if the source is being injected in the correct location. Third test checks if the correct velocity mesh is read by the correct rank. The fourth test checks the MPI communication at ghost region. It creates homogeneous wavefield with value equal to the rank. It then does the ghost region communication and after the test we test if the padded regions have values equal to rank+1 or rank-1.
 
 For the integration test, the simulations for same parameter are run with 1 and 8 processes and their difference is calculated at the end. The maximum of the difference is returned which shows 0, which confirms that they are running well. To compare the time simulations, here are two simulations showing the wavefield evolution with time,
 
@@ -213,7 +212,7 @@ For the integration test, the simulations for same parameter are run with 1 and 
 ### Simulation for 8 Processes
 ![](images/python/process_8.gif "Simulation for 8 Processors")
 
-They are quite similar, which suggests they are working well. The animations were made using ImageMagick convert, not provided in test. Instead, simulation plots at each time step is there.
+They are quite similar, which suggests they are working well. The animations were made using ImageMagick convert, not provided in test but simulation plots for each time step are there.
 
 
 ## Timing
@@ -260,8 +259,8 @@ Scaling Results Time:
 Scaling Results Efficiency:
 ![](images/python/Scaling_results_eff.png "Results of scaling Time")
 
-As we can see from the plots, the time reduces as we use more cores for the simulations. If we look at the efficiency curve, it loses efficiency linearly in log scale upto most of the nodes. We spot a sudden decrease in efficiency when 12 cores are used both for strong as well as weak scaling case.
-The efficiency loss is expected due to the increased communication overhead and also the fact not the whole process can be parallelized. One of the contributing factor towards aalowdown is writing out outputs after certain timesteps. Code can be made faster if instead of writing out the entire wavefield, if we only write out the displacement values at spatial points where we are interested, which is the case for Geophysical applications.
+As we can see from the plots, the time reduces as we use more cores for the simulations. If we look at the efficiency curve, it loses efficiency linearly in log scale up to most of the nodes. We spot a sudden decrease in efficiency when 12 cores are used both for strong as well as weak scaling case.
+The efficiency loss is expected due to the increased communication overhead and also the fact that the whole process can't be parallelized. One of the contributing slowdown factors is writing out outputs after certain timesteps. The code could be made faster if instead of writing out the entire wavefield, we only write out the displacement values at spatial points of interest, which is often done for Geophysical applications.
 
 # C
 ## Overview and setup
@@ -274,7 +273,7 @@ The C version of the code is found in the c folder. inside the folder, there are
 
 `serial_test.c` - test if the serial simulation code works as desired. 
 
-`mpi_test.c` - test if the simulation code works as desired, and mpi works as well. 
+`mpi_test.c` - test if the simulation code and mpi code produce the same output. 
 
 `weak_scaling.sh` - Slurm submission script to get the timing for weak scaling test.
 
@@ -285,7 +284,7 @@ The C version of the code is found in the c folder. inside the folder, there are
 
 test the correctness of source injection.
 
-test for correctness of wave porpagtion.
+test for correctness of wave propagation.
 
 test for correctness of boundary condition.
 
@@ -301,13 +300,13 @@ test for checking boundary data exchange.
 
 test for subdomain correctly divided.
 
-#### to compile mpi_test.c please run:  mpicc mpi_test.c -o mpi_test -lm -std=c99 then specify the arguemnt for nx and ny for the executable file. 
+#### to compile mpi_test.c please run:  mpicc mpi_test.c -o mpi_test -lm -std=c99 then specify the argument for nx and ny for the executable file. 
 
 In order to visualize the output, we plotted the wave simulation at various snapshots:
 
 ![](images/c/c_wavefield.gif)
 
-In general, the simulation is clear. once it reaches the boundary, a minor numerical dispersion observed, indicate a finer grid spacing is necessary. Both MPI and serial work as the same, here show the example generated from MPI.
+In general, the simulation is clear. once it reaches the boundary, a minor numerical dispersion observed, indicate a finer grid spacing is necessary. Both MPI and serial work as the same, but the animation above shows the MPI output.
 
 ## Timing
 
@@ -351,15 +350,20 @@ The following tables and figure shows the results of the strong and weak scaling
 
 ![](images/c/scaling.png)
 
-A few comments:
-
 
 
 
 # Code Comparisons
 
-As seen from the times from C, Python and Julia, C works best by looking at the absolute time. Python and Julia takes much more time to run the same simulations compared to C. There maybe some mismatch in implementation strategy but still C is much faster which is quite expected.
-Even though for large dimensions, Python outperforms C. It maybe due to the vectorized implementation of the for loop in Python. Also, the C code ran on number of nodes compared to Python which ran on a single node. Internode communications may have slow down processess. Implementation of mpi4py in numerous node was not efficient, maybe due to its numerous interdependencies. Proper installation of mpi4py in HPC system will help in internode runs also for python MPI implementations.
+Part of the goal of the project was to compare times and scalability of the different implementations. However, there are a few subtleties that make this more complicated than initially anticipated, but these could probably be corrected for future work. First, the implementations are not as similar as possible. For example, the Julia code uses a 9x9 2D convocational stencil to calculate the Laplacian with finite differences. This is less than ideal because 64 of the 81 pixels are zero and essentially wasted calculations. Also, we had issues getting mpi4py to work on MIO with the natively compiled MPI executable so we installed MPI with conda. This had a huge negative impact on the performance so we performed the Python scaling tests on a single node and varied the number of cores. This may have given the Python code a bit of an edge because intra-node MPI communication is likely faster than node-to-node communication. 
+
+For the weak scaling times, C performed best by looking at the absolute time. Python and Julia takes much more time to run the same simulations compared to C. As mentioned above, there may be some mismatch in implementation strategy but still C is much faster for these tests.
+
+For larger dimensions used in the strong scaling test, Python outperforms C. It maybe due to the vectorized implementation of the for loop in numpy or the issues with cores vs nodes. The Julia code is also not that much slower, given the Laplacian estimation in the Julia implementation is much more expensive. 
+
+In the future we would like to resolve the mpi4py issue and create a more efficient Julia Laplacian operator and re-run the tests for a better comparison. 
+
+In summary, for smaller problems used in the weak scaling tests C performs much better than Julia or Python. For larger grids, however, as used in the strong scaling tests, the differences aren't that great given the considerations mentioned above and any of the three languages could be viable choices for acoustic wave simulation in an HPC environment.  
 
 
 # References
