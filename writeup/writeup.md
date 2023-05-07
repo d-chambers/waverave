@@ -359,6 +359,7 @@ A few comments:
 # Code Comparisons
 
 As seen from the times from C, Python and Julia, C works best by looking at the absolute time. Python and Julia takes much more time to run the same simulations compared to C. There maybe some mismatch in implementation strategy but still C is much faster which is quite expected.
+Even though for large dimensions, Python outperforms C. It maybe due to the vectorized implementation of the for loop in Python. Also, the C code ran on number of nodes compared to Python which ran on a single node. Internode communications may have slow down processess. Implementation of mpi4py in numerous node was not efficient, maybe due to its numerous interdependencies. Proper installation of mpi4py in HPC system will help in internode runs also for python MPI implementations.
 
 
 # References
